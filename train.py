@@ -69,8 +69,7 @@ def train_model():
     plt.grid(color='black', linestyle='--')
     plt.show()
 
-    output_path =r'saved_model/xxx'# determine output path
-
-    model.save(output_path + r'.h5')
+    # output_path =r'saved_model/xxx'# determine output path
+    # model.save(output_path + r'.h5')
 
 train_model()
