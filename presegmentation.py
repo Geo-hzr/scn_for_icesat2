@@ -77,7 +77,7 @@ def presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thre_gradien
 
     X_r = []
     for i in range(M):
-        fp = findpeaks(method='peakdetect',interpolate=True)
+        fp = findpeaks(method='peakdetect',interpolate=True)# optional
         results = fp.fit(Z_c_[i])
         peaks_set = np.array(results['df'].iloc[:, -1])
         length = len(np.where(peaks_set == True)[0])
