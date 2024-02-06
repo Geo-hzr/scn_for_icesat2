@@ -44,7 +44,7 @@ def train_model():
           input_image.shape, input_label.shape)
 
     y_train_onehot = input_label
-    patience_num = 5
+    patience_num = 3
     callback = callbacks.EarlyStopping(monitor='val_loss', patience=patience_num, mode='min')  # loss
     validation_split = 0.7
     history = model.fit(
