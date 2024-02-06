@@ -137,8 +137,3 @@ def scene_classification_net(num_points=2048,
     print(r'model initialization done.')
 
     return model
-
-## initialize a model
-# model = scene_classification_net()
-## check a model
-# model.summary()
