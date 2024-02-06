@@ -32,7 +32,7 @@ def test_model():
         quantile = 0.2 # for clustering
         voxel_size = 30
         num_sampling = 15
-        thre_gradient = 0.02
+        thre_gradient = 0.02 # adjusted
 
         # print(name)
 
