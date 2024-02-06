@@ -16,6 +16,6 @@
 2. Use [feature_augmentation.py](https://github.com/Geo-hzr/scn_for_icesat2/blob/b0acfa0f9d35da797265e784f2206450e592cf8e/feature_augmentation.py) to convert training samples into three feature spaces.
 3. Use [scene_classification_network.py](https://github.com/Geo-hzr/scn_for_icesat2/blob/2797be3034080082df7a31db64854aa6309beddd/scene_classification_network.py) to train and save a model.
 ### Use a Saved Model (see [test.py](https://github.com/Geo-hzr/scn_for_icesat2/blob/e27259ea55871109d2c8418840655981c84b9abe/test.py))
-1. Load a model from [saved_model]().
+1. Load a model from [saved_model](https://github.com/Geo-hzr/scn_for_icesat2/tree/94ba76c584f326ac8921ec6d5db64ddbcd4caefb/saved_model).
 2. Prepare and put a track of ATL03 data in [test_data]().
 3. Use [presegmentation.py]() to segment a track of ATL03 data into separate scenes, whose labels will be predicted by a loaded model.
