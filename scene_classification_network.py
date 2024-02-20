@@ -110,10 +110,10 @@ def scene_classification_net(num_points=2048,
 
     input_2d_image = Input(shape=(img_height, img_width, 3))
 
-    h1 = modified_point_net(input_3d_point_cloud, input_normal_vector, channels=16)
+    h1 = modified_point_net(input_3d_point_cloud, input_normal_vector, channels=64)
     h2 = pretrained_dense_net(input_2d_image, num_classes)
     h3 = graph_attention_net(input_dc_vector, input_ad_matrix, input_n_ad_matrix,
-                                   channels=32, attn_heads=8,num_nodes=num_nodes)
+                                   channels=64, attn_heads=16,num_nodes=num_nodes)
 
     x = Concatenate()([h1, h2, h3])
 
