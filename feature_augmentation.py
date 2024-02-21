@@ -8,6 +8,7 @@ from spektral.utils import normalized_adjacency
 import cv2
 import open3d as o3d
 import PIL.Image as Image
+from scipy.spatial.transform import Rotation
 
 def farthest_point_sample(pts, num):
 
@@ -148,7 +149,7 @@ def feature_space_construction(num_points=2048,
                     ):
 
     fp_positive = os.listdir(fp_positive_path)
-
+    
     fp_negative = os.listdir(fp_negative_path)
 
     input_point_cloud, input_normal_vector, \
@@ -184,6 +185,39 @@ def feature_space_construction(num_points=2048,
         input_dc_vector.append(X)
         input_n_ad_matrix.append(N_A)
 
+    # optional
+    # for name in fp_negative[:]:
+    # 
+    #     input_label.append(class_label)
+    # 
+    #     df = pd.read_csv(fp_negative_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+    # 
+    #     data = np.array(df.iloc[:, :num_features])
+    # 
+    #     rot = Rotation.random()
+    #     R = rot.as_matrix()
+    #     data_R = np.dot(R, np.transpose(data))
+    #     data = np.transpose(data_R)
+    # 
+    #     # 3d point cloud
+    #     downpcd = point_cloud_conversion(data, num_points)
+    #     input_point_cloud.append(downpcd)
+    # 
+    #     # normal vector
+    #     normal_vector = normal_vector_conversion(downpcd)
+    #     input_normal_vector.append(normal_vector)
+    # 
+    #     # 2d image
+    #     image = image_conversion(data,img_width,img_height)
+    #     input_image.append(image)
+    # 
+    #     # 2d graph
+    #     A, N_A, X = graph_conversion(image,graph_width,graph_height,num_channels,r,t)
+    # 
+    #     input_ad_matrix.append(A)
+    #     input_dc_vector.append(X)
+    #     input_n_ad_matrix.append(N_A)
+
     class_label = 1
 
     for name in fp_positive[:]:
@@ -213,6 +247,40 @@ def feature_space_construction(num_points=2048,
         input_ad_matrix.append(A)
         input_dc_vector.append(X)
         input_n_ad_matrix.append(N_A)
+
+    # optional
+    # for name in fp_positive[:]:
+    # 
+    #     input_label.append(class_label)
+    # 
+    #     df = pd.read_csv(fp_positive_path + r'//' + str(name[:])
+    #                      , names=['x', 'y', 'z'], sep=',')
+    # 
+    #     data = np.array(df.iloc[:, :num_features])
+    # 
+    #     rot = Rotation.random()
+    #     R = rot.as_matrix()
+    #     data_R = np.dot(R, np.transpose(data))
+    #     data = np.transpose(data_R)
+    # 
+    #     # 3d point cloud
+    #     downpcd = point_cloud_conversion(data, num_points)
+    #     input_point_cloud.append(downpcd)
+    # 
+    #     # normal vector
+    #     normal_vector = normal_vector_conversion(downpcd)
+    #     input_normal_vector.append(normal_vector)
+    # 
+    #     # 2d image
+    #     image = image_conversion(data, img_width, img_height)
+    #     input_image.append(image)
+    # 
+    #     # 2d graph
+    #     A, N_A, X = graph_conversion(image, graph_width, graph_height, num_channels, r, t)
+    # 
+    #     input_ad_matrix.append(A)
+    #     input_dc_vector.append(X)
+    #     input_n_ad_matrix.append(N_A)
 
     print(r'feature augmentation done.')
 
