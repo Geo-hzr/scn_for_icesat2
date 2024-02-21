@@ -50,7 +50,7 @@ def train_model():
     history = model.fit(
         [input_point_cloud, input_normal_vector, input_ad_matrix, input_dc_vector, input_image, input_n_ad_matrix],
         y_train_onehot
-        , epochs=20, batch_size=32, validation_split=validation_split, callbacks=[callback])  #
+        , epochs=30, batch_size=32, validation_split=validation_split, callbacks=[callback])  #
 
     print(history.history.keys())
 
