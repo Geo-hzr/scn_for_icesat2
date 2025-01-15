@@ -19,7 +19,5 @@
 1. Load a model from [saved_model](https://github.com/Geo-hzr/scn_for_icesat2/tree/94ba76c584f326ac8921ec6d5db64ddbcd4caefb/saved_model).
 2. Prepare and put a track of ATL03 data in [test_data](https://github.com/Geo-hzr/scn_for_icesat2/tree/0397e3edb822745721e36bbe7f5712dc6ba9c8e7/test_data).
 3. Use [presegmentation.py](https://github.com/Geo-hzr/scn_for_icesat2/blob/58a4b7bf0014d4b5a4ad2cb987d73c109a8ded9f/presegmentation.py) to segment a track of ATL03 data into separate scenes, whose labels are predicted by a loaded model.
-## Paper
+## Citation
 Please cite our paper if you use this project in your research: [A Novel Deep Learning-Based Approach for Rift and Iceberg Recognition From ICESat-2 Data](https://ieeexplore.ieee.org/abstract/document/10480730), Z. Huang, S. Wang, R. B. Alley, A. Li, and B. R. Parizek, IEEE Transactions on Geoscience and Remote Sensing, 2024, doi: 10.1109/TGRS.2024.3382573.
-## Disclaimer
-It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of merchantability or fitness for a particular purpose.
