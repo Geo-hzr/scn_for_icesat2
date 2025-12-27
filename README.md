@@ -1,4 +1,4 @@
-# Scene Classification Network for ICESat2 Data
+# Scene Classification Network for ICESat-2 Data
 ## Requirements
 1. scipy
 2. sklearn
