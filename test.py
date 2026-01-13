@@ -32,7 +32,7 @@ def test_model():
         quantile = 0.2 # for clustering
         voxel_size = 30
         num_sampling = 15
-        thr_gradient = 0.02 # adjusted
+        threshold = 0.02 # adjusted
 
         # print(name)
 
@@ -51,7 +51,7 @@ def test_model():
         downpcd_point = np.asarray(downpcd.points)
         ref_pcd = downpcd_point
 
-        scenes = presegmentation.presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thr_gradient)
+        scenes = presegmentation.presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, threshold)
 
         input_point_cloud, input_normal_vector, \
         input_ad_matrix, input_n_ad_matrix, input_dc_vector, \
