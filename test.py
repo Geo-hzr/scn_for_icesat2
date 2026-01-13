@@ -1,6 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
@@ -32,7 +32,7 @@ def test_model():
         quantile = 0.2 # for clustering
         voxel_size = 30
         num_sampling = 15
-        thre_gradient = 0.02 # adjusted
+        thr_gradient = 0.02 # adjusted
 
         # print(name)
 
@@ -51,7 +51,7 @@ def test_model():
         downpcd_point = np.asarray(downpcd.points)
         ref_pcd = downpcd_point
 
-        scenes = presegmentation.presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thre_gradient)
+        scenes = presegmentation.presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thr_gradient)
 
         input_point_cloud, input_normal_vector, \
         input_ad_matrix, input_n_ad_matrix, input_dc_vector, \
