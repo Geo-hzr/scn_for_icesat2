@@ -5,7 +5,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from findpeaks import findpeaks
 
-def presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thre_gradient):
+def presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, threshold):
 
     gradient = []
 
@@ -52,7 +52,7 @@ def presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, thre_gradien
 
     index_n = []
     for i in range(len(gradient)):
-        if np.abs(gradient[i]) > thre_gradient:
+        if np.abs(gradient[i]) > threshold:
             index_n.append(i)
     index_n = np.array(index_n)
 
