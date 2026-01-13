@@ -12,16 +12,16 @@ from scipy.spatial.transform import Rotation
 
 def farthest_point_sample(pts, num):
 
-    pc1 = np.expand_dims(pts, axis=0)  # 1, N, 3
-    batchsize, npts, dim = pc1.shape
+    pc = np.expand_dims(pts, axis=0)  # 1, N, 3
+    batchsize, npts, dim = pc.shape
     centroids = np.zeros((batchsize, num), dtype=np.long)
     distance = np.ones((batchsize, npts)) * 1e10
     farthest_id = np.random.randint(0, npts, (batchsize,), dtype=np.long)
     batch_index = np.arange(batchsize)
     for i in range(num):
         centroids[:, i] = farthest_id
-        centro_pt = pc1[batch_index, farthest_id, :].reshape(batchsize, 1, 3)
-        dist = np.sum((pc1 - centro_pt) ** 2, -1)
+        centro_pt = pc[batch_index, farthest_id, :].reshape(batchsize, 1, 3)
+        dist = np.sum((pc - centro_pt) ** 2, -1)
         mask = dist < distance
         distance[mask] = dist[mask]
         farthest_id = np.argmax(distance[batch_index])
