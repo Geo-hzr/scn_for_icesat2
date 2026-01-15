@@ -120,6 +120,6 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
         if coord_lst.shape[0] != 0:
             scene_lst.append(coord_lst)
 
-    print(r'Presegmentation done.')
+    print('Presegmentation done.')
 
     return scene_lst
