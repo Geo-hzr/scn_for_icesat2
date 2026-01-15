@@ -129,6 +129,6 @@ def build_scn(num_points=2048,
         inputs=[pcd, normal_vec, img, adj_mat, adj_mat_normalized, dc_vec],
         outputs=output)
 
-    print(r'Model initialization done.')
+    print('Model initialization done.')
 
     return model
