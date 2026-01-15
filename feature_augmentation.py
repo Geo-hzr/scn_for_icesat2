@@ -10,278 +10,273 @@ import open3d as o3d
 import PIL.Image as Image
 from scipy.spatial.transform import Rotation
 
-def farthest_point_sample(pts, num):
+def fps(pcd, num_samples):
 
-    pc = np.expand_dims(pts, axis=0)  # 1, N, 3
-    batchsize, npts, dim = pc.shape
-    centroids = np.zeros((batchsize, num), dtype=np.long)
-    distance = np.ones((batchsize, npts)) * 1e10
-    farthest_id = np.random.randint(0, npts, (batchsize,), dtype=np.long)
-    batch_index = np.arange(batchsize)
-    for i in range(num):
-        centroids[:, i] = farthest_id
-        centro_pt = pc[batch_index, farthest_id, :].reshape(batchsize, 1, 3)
-        dist = np.sum((pc - centro_pt) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest_id = np.argmax(distance[batch_index])
+    pcd = np.expand_dims(pcd, axis=0)  # 1, N, 3
+    batch_size, num_points, _ = pcd.shape
+    centroid_mat = np.zeros((batch_size, num_samples), dtype=np.long)
+    dist_mat = np.ones((batch_size, num_points)) * 1e10
+    farthest_idx = np.random.randint(0, num_points, (batch_size,), dtype=np.long)
+    batch_idx = np.arange(batch_size)
+    for i in range(num_samples):
+        centroid_mat[:, i] = farthest_idx
+        centroid_pt = pcd[batch_idx, farthest_idx, :].reshape(batch_size, 1, 3)
+        dist = np.sum((pcd - centroid_pt) ** 2, -1)
+        mask = dist < dist_mat
+        dist_mat[mask] = dist[mask]
+        farthest_idx = np.argmax(dist_mat[batch_idx])
 
-    return centroids
+    return centroid_mat
 
-def norm_point_cloud(pcd):
+def normalize_pcd(pcd):
 
     centroid = np.mean(pcd, axis=0)
-    pc = pcd - centroid
-    m = np.max(np.sqrt(np.sum(pc ** 2, axis=1)))
-    pc_normalized = pc / m
+    pcd = pcd - centroid
+    factor = np.max(np.sqrt(np.sum(pcd ** 2, axis=1)))
+    pcd_normalized = pcd / factor
 
-    return pc_normalized
+    return pcd_normalized
 
 @jit(nopython=True)
-def edge_detection(m, n, I, r, t):
+def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
 
-    L = 255
-    X = []
-    Y = []
-    for i in range(m):
-        for j in range(n):
-            X.append(i)
-            Y.append(j)
+    height_lst = []
+    width_lst = []
+    for i in range(graph_height):
+        for j in range(graph_width):
+            height_lst.append(i)
+            width_lst.append(j)
 
-    dis = np.zeros((m * n, m * n))
-    v = []
-    weight_v = []
+    dist_mat = np.zeros((graph_height * graph_width, graph_height * graph_width))
+    pair_lst = []
+    weight_lst = []
 
-    for i in range(m * n):
-        for j in range(i, m * n):
-            d = np.sqrt(np.square(X[i] - X[j]) + np.square(Y[i] - Y[j]))
-            dis[i][j] = d
-            w = (np.square(d) + (np.square(r) * np.abs(I[i] - I[j]) / L)) / (2 * np.square(r))
-            if d <= r and w <= t:
-                v.append([i, j])
-                weight_v.append(w)
+    for i in range(graph_height * graph_width):
+        for j in range(i, graph_height * graph_width):
+            d = np.sqrt(np.square(height_lst[i] - height_lst[j]) + np.square(width_lst[i] - width_lst[j]))
+            dist_mat[i][j] = d
+            w = (np.square(d) + (np.square(r_coef) * np.abs(px_lst[i] - px_lst[j]) / 255)) / (2 * np.square(r_coef))
+            if d <= r_coef and w <= t_coef:
+                pair_lst.append([i, j])
+                weight_lst.append(w)
 
-    return v, dis, weight_v
+    return pair_lst, dist_mat, weight_lst
 
-def graph_construction(img, r, t):
+def construct_graph(img, r_coef, t_coef):
 
-    I = []
-    m, n = img.shape[0], img.shape[1]
+    px_lst = []
+    img_height, img_width = img.shape[0], img.shape[1]
 
-    G = nx.Graph()
-    node_num = 0
-    for i in range(m):
-        for j in range(n):
-            G.add_node(node_num, pos=(j, n - i))
-            I.append(np.int(img[i][j]))
-            node_num += 1
+    graph = nx.Graph()
+    node_idx = 0
+    for i in range(img_height):
+        for j in range(img_width):
+            graph.add_node(node_idx, pos=(j, img_width - i))
+            px_lst.append(np.int(img[i][j]))
+            node_idx += 1
 
-    I = np.array(I)
+    px_lst = np.array(px_lst)
 
-    g, dis_m, w = edge_detection(m, n, I, r, t)
+    pair_lst, dist_mat, weight_lst = detect_graph_edge(img_height, img_width, px_lst, r_coef, t_coef)
 
-    for data, weights in zip(g, w):
-        G.add_edge(data[0], data[1], weight=weights)
+    for pair, weight in zip(pair_lst, weight_lst):
+        graph.add_edge(pair[0], pair[1], weight=weight)
 
-    return G
+    return graph
 
-def point_cloud_conversion(data, num_points):
+def downsample_pcd(atl03, num_points):
 
-    centroids = farthest_point_sample(data, num_points)
-    qbp_raw_data = data[centroids][0]
-    downpcd = norm_point_cloud(qbp_raw_data)
+    centroid_mat = fps(atl03, num_points)
+    pcd_downsampled = normalize_pcd(atl03[centroid_mat][0])
 
-    return downpcd
+    return pcd_downsampled
 
-def normal_vector_conversion(downpcd):
+def generate_normal_vec(pcd_downsampled):
 
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.array(downpcd))
+    pcd.points = o3d.utility.Vector3dVector(np.array(pcd_downsampled))
     pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
 
     return np.asarray(pcd.normals)
 
-def image_conversion(data,img_width,img_height):
+def generate_img(pcd, img_height, img_width):
 
     fig = plt.figure(figsize=(img_width / 100, img_height / 100), dpi=100)
     ax = plt.gca()
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
-    plt.scatter(data[:, 0], data[:, 2], color='black', s=0.01)
-    plt.xlim((min(data[:, 0]), max(data[:, 0])))
-    plt.ylim((min(data[:, 2]), max(data[:, 2])))
+    plt.scatter(pcd[:, 0], pcd[:, 2], color='black', s=0.01)
+    plt.xlim((np.min(pcd[:, 0]), np.max(pcd[:, 0])))
+    plt.ylim((np.min(pcd[:, 2]), np.max(pcd[:, 2])))
     plt.axis('off')
     fig.canvas.draw()
     w, h = fig.canvas.get_width_height()
     buf = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8)
     buf.shape = (w, h, 3)
     buf = np.roll(buf, 3, axis=2)
-    image = Image.frombytes("RGB", (w, h), buf.tostring())
-    image = np.asarray(image)
+    img = Image.frombytes('RGB', (w, h), buf.tostring())
+    img = np.asarray(img)
     plt.close()
 
-    return image
+    return img
 
-def graph_conversion(image,graph_width,graph_height,num_channels, r, t):
+def generate_graph(img, graph_height, graph_width, num_channels, r, t):
 
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    gray = cv2.resize(gray, (graph_width, graph_height))
-    graph = graph_construction(np.array(gray, dtype=np.uint8), r, t)
-    degree = nx.degree_centrality(graph)
-    As = nx.adjacency_matrix(graph)
-    A = As.todense()
-    N_A = normalized_adjacency(A)
-    X = np.array(list(degree.values())).reshape((graph_width * graph_height, num_channels))
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img_gray = cv2.resize(img_gray, (graph_width, graph_height))
+    graph = construct_graph(np.array(img_gray, dtype=np.uint8), r, t)
+    dc = nx.degree_centrality(graph)
+    adj_mat = nx.adjacency_matrix(graph)
+    adj_mat_dense = adj_mat.todense()
+    adj_mat_normalzied = normalized_adjacency(adj_mat_dense)
+    dc_vec = np.array(list(dc.values())).reshape((graph_height * graph_width, num_channels))
 
-    return A, N_A, X
+    return adj_mat_dense, adj_mat_normalzied, dc_vec
 
-def feature_space_construction(num_points=2048,
-                    num_features=3,
-                    img_width=512,
-                    img_height=128,
-                    graph_width=64,
-                    graph_height=16,
-                    num_channels=1,
-                    r=3,
-                    t=0.315,
-                    fp_positive_path=r'train_data/positive',
-                    fp_negative_path=r'train_data/negative',
-                    ):
+def construct_feature_space(num_points=2048,
+                            num_features=3,
+                            img_height=128,
+                            img_width=512,
+                            graph_height=16,
+                            graph_width=64,
+                            num_channels=1,
+                            r_coef=3,
+                            t_coef=0.315,
+                            fp_positive=r'train_data/positive',
+                            fp_negative=r'train_data/negative'):
 
-    fp_positive = os.listdir(fp_positive_path)
-    
-    fp_negative = os.listdir(fp_negative_path)
+    fn_lst_positive = os.listdir(fp_positive)
 
-    input_point_cloud, input_normal_vector, \
-    input_ad_matrix, input_n_ad_matrix, input_dc_vector, \
-    input_image, input_label = [], [], [], [], [], [], []
+    fn_lst_negative = os.listdir(fp_negative)
+
+    pcd_lst, normal_vec_lst, \
+    adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, \
+    img_lst, label_lst = [], [], [], [], [], [], []
 
     class_label = 0
 
-    for name in fp_negative[:]:
+    for name in fn_lst_negative[:]:
 
-        input_label.append(class_label)
+        label_lst.append(class_label)
 
-        df = pd.read_csv(fp_negative_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        data = np.array(df.iloc[:, :num_features])
+        pcd = np.array(df.iloc[:, :num_features])
 
-        # 3d point cloud
-        downpcd = point_cloud_conversion(data, num_points)
-        input_point_cloud.append(downpcd)
+        # 3D point cloud
+        pcd_downsampled = downsample_pcd(pcd, num_points)
+        pcd_lst.append(pcd_downsampled)
 
-        # normal vector
-        normal_vector = normal_vector_conversion(downpcd)
-        input_normal_vector.append(normal_vector)
+        # Normal vector
+        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec_lst.append(normal_vec)
 
-        # 2d image
-        image = image_conversion(data,img_width,img_height)
-        input_image.append(image)
+        # 2D img
+        img = generate_img(pcd, img_height, img_width)
+        img_lst.append(img)
 
-        # 2d graph
-        A, N_A, X = graph_conversion(image,graph_width,graph_height,num_channels,r,t)
+        # 2D graph
+        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
-        input_ad_matrix.append(A)
-        input_dc_vector.append(X)
-        input_n_ad_matrix.append(N_A)
+        adj_mat_lst.append(adj_mat_dense)
+        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        dc_vec_lst.append(dc_vec)
 
-    # optional
-    # for name in fp_negative[:]:
-    # 
-    #     input_label.append(class_label)
-    # 
-    #     df = pd.read_csv(fp_negative_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
-    # 
-    #     data = np.array(df.iloc[:, :num_features])
-    # 
-    #     rot = Rotation.random()
-    #     R = rot.as_matrix()
-    #     data_R = np.dot(R, np.transpose(data))
-    #     data = np.transpose(data_R)
-    # 
-    #     # 3d point cloud
-    #     downpcd = point_cloud_conversion(data, num_points)
-    #     input_point_cloud.append(downpcd)
-    # 
-    #     # normal vector
-    #     normal_vector = normal_vector_conversion(downpcd)
-    #     input_normal_vector.append(normal_vector)
-    # 
-    #     # 2d image
-    #     image = image_conversion(data,img_width,img_height)
-    #     input_image.append(image)
-    # 
-    #     # 2d graph
-    #     A, N_A, X = graph_conversion(image,graph_width,graph_height,num_channels,r,t)
-    # 
-    #     input_ad_matrix.append(A)
-    #     input_dc_vector.append(X)
-    #     input_n_ad_matrix.append(N_A)
+    # Optional
+    for name in fn_lst_negative[:]:
+
+        label_lst.append(class_label)
+
+        df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+
+        pcd = np.array(df.iloc[:, :num_features])
+
+        r = Rotation.random()
+        r_mat = r.as_matrix()
+        pcd_rotated = np.dot(r_mat, np.transpose(pcd))
+        pcd = np.transpose(pcd_rotated)
+
+        # 3D point cloud
+        pcd_downsampled = downsample_pcd(pcd, num_points)
+        pcd_lst.append(pcd_downsampled)
+
+        # Normal vector
+        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec_lst.append(normal_vec)
+
+        # 2D image
+        img = generate_img(pcd, img_height, img_width)
+        img_lst.append(img)
+
+        # 2D graph
+        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+
+        adj_mat_lst.append(adj_mat_dense)
+        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        dc_vec_lst.append(dc_vec)
 
     class_label = 1
 
-    for name in fp_positive[:]:
+    for name in fn_lst_positive[:]:
 
-        input_label.append(class_label)
+        label_lst.append(class_label)
 
-        df = pd.read_csv(fp_positive_path + r'//' + str(name[:])
-                         , names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        data = np.array(df.iloc[:, :num_features])
+        pcd = np.array(df.iloc[:, :num_features])
 
-        # 3d point cloud
-        downpcd = point_cloud_conversion(data, num_points)
-        input_point_cloud.append(downpcd)
+        # 3D point cloud
+        pcd_downsampled = downsample_pcd(pcd, num_points)
+        pcd_lst.append(pcd_downsampled)
 
-        # normal vector
-        normal_vector = normal_vector_conversion(downpcd)
-        input_normal_vector.append(normal_vector)
+        # Normal vector
+        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec_lst.append(normal_vec)
 
-        # 2d image
-        image = image_conversion(data, img_width, img_height)
-        input_image.append(image)
+        # 2D image
+        img = generate_img(pcd, img_height, img_width)
+        img_lst.append(img)
 
-        # 2d graph
-        A, N_A, X = graph_conversion(image, graph_width, graph_height, num_channels, r, t)
+        # 2D graph
+        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
-        input_ad_matrix.append(A)
-        input_dc_vector.append(X)
-        input_n_ad_matrix.append(N_A)
+        adj_mat_lst.append(adj_mat_dense)
+        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        dc_vec_lst.append(dc_vec)
 
-    # optional
-    # for name in fp_positive[:]:
-    # 
-    #     input_label.append(class_label)
-    # 
-    #     df = pd.read_csv(fp_positive_path + r'//' + str(name[:])
-    #                      , names=['x', 'y', 'z'], sep=',')
-    # 
-    #     data = np.array(df.iloc[:, :num_features])
-    # 
-    #     rot = Rotation.random()
-    #     R = rot.as_matrix()
-    #     data_R = np.dot(R, np.transpose(data))
-    #     data = np.transpose(data_R)
-    # 
-    #     # 3d point cloud
-    #     downpcd = point_cloud_conversion(data, num_points)
-    #     input_point_cloud.append(downpcd)
-    # 
-    #     # normal vector
-    #     normal_vector = normal_vector_conversion(downpcd)
-    #     input_normal_vector.append(normal_vector)
-    # 
-    #     # 2d image
-    #     image = image_conversion(data, img_width, img_height)
-    #     input_image.append(image)
-    # 
-    #     # 2d graph
-    #     A, N_A, X = graph_conversion(image, graph_width, graph_height, num_channels, r, t)
-    # 
-    #     input_ad_matrix.append(A)
-    #     input_dc_vector.append(X)
-    #     input_n_ad_matrix.append(N_A)
+    # Optional
+    for name in fn_lst_positive[:]:
 
-    print(r'feature augmentation done.')
+        label_lst.append(class_label)
 
-    return input_point_cloud, input_normal_vector, input_ad_matrix, input_n_ad_matrix, input_dc_vector, input_image, input_label
+        df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+
+        pcd = np.array(df.iloc[:, :num_features])
+
+        r = Rotation.random()
+        r_mat = r.as_matrix()
+        pcd_rotated = np.dot(r_mat, np.transpose(pcd))
+        pcd = np.transpose(pcd_rotated)
+
+        # 3D point cloud
+        pcd_downsampled = downsample_pcd(pcd, num_points)
+        pcd_lst.append(pcd_downsampled)
+
+        # Normal vector
+        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec_lst.append(normal_vec)
+
+        # 2D img
+        img = generate_img(pcd, img_height, img_width)
+        img_lst.append(img)
+
+        # 2D graph
+        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_width, graph_height, num_channels, r_coef, t_coef)
+
+        adj_mat_lst.append(adj_mat_dense)
+        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        dc_vec_lst.append(dc_vec)
+
+    print(r'Feature augmentation done.')
+
+    return pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, label_lst
