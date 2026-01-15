@@ -1,7 +1,7 @@
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
@@ -10,47 +10,45 @@ from tensorflow.keras import *
 import feature_augmentation
 import scene_classification_network
 
-#fix random seed
-tf_seed = 0
-tf.random.set_seed(tf_seed)
+TF_SEED = 0
+tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
 
 def train_model():
 
-    model = scene_classification_network.scene_classification_net()
+    model = scene_classification_network.build_scn()
+
+    model.summary()
 
     model.compile(optimizer=optimizers.Adam(learning_rate=1e-4, decay=1e-8, clipvalue=1.0),
                   loss=losses.binary_crossentropy,
                   metrics=[metrics.binary_accuracy])
 
-    input_point_cloud, input_normal_vector, input_ad_matrix, \
-    input_n_ad_matrix, input_dc_vector, input_image, \
-    input_label = feature_augmentation.feature_space_construction()
+    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, \
+    adj_mat_normalized_lst, dc_vec_lst, \
+    label_lst = feature_augmentation.construct_feature_space()
 
-    index_list = [i for i in range(len(input_label))]
-    np.random.shuffle(index_list)
-    index_list = index_list[:]# determine how many samples are used
+    idx_lst = [i for i in range(len(label_lst))]
+    np.random.shuffle(idx_lst)
+    idx_lst = idx_lst[:]
 
-    input_point_cloud = np.array(input_point_cloud)[index_list]
-    input_normal_vector = np.array(input_normal_vector)[index_list]
-    input_ad_matrix = np.array(input_ad_matrix)[index_list]
-    input_n_ad_matrix = np.array(input_n_ad_matrix)[index_list]
-    input_dc_vector = np.array(input_dc_vector)[index_list]
-    input_image = np.array(input_image)[index_list] / 255.
-    input_label = np.array(input_label)[index_list]
+    pcd_lst = np.array(pcd_lst)[idx_lst]
+    normal_vec_lst = np.array(normal_vec_lst)[idx_lst]
+    img_lst = np.array(img_lst)[idx_lst] / 255.
+    adj_mat_lst = np.array(adj_mat_lst)[idx_lst]
+    adj_mat_normalized_lst = np.array(adj_mat_normalized_lst)[idx_lst]
+    dc_vec_lst = np.array(dc_vec_lst)[idx_lst]
+    label_lst = np.array(label_lst)[idx_lst]
 
-    print(input_point_cloud.shape, input_normal_vector.shape, input_ad_matrix.shape, input_dc_vector.shape,
-          input_image.shape, input_label.shape)
+    print(pcd_lst.shape, normal_vec_lst.shape, img_lst.shape, adj_mat_lst.shape, dc_vec_lst.shape, label_lst.shape)
 
-    y_train_onehot = input_label
-    patience_num = 3
-    callback = callbacks.EarlyStopping(monitor='val_loss', patience=patience_num, mode='min')  # loss
+    patience = 3
+    callback = callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
     validation_split = 0.7
     history = model.fit(
-        [input_point_cloud, input_normal_vector, input_ad_matrix, input_dc_vector, input_image, input_n_ad_matrix],
-        y_train_onehot
-        , epochs=30, batch_size=32, validation_split=validation_split, callbacks=[callback]) 
+        [pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst],
+        label_lst, epochs=20, batch_size=32, validation_split=validation_split, callbacks=[callback])
 
     print(history.history.keys())
 
@@ -69,7 +67,8 @@ def train_model():
     plt.grid(color='black', linestyle='--')
     plt.show()
 
-    # output_path =r'saved_model/xxx'# determine output path
-    # model.save(output_path + r'.h5')
+    output_path =r'saved_model/scn'
+
+    model.save(output_path + r'.h5')
 
 train_model()
