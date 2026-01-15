@@ -1,6 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
@@ -11,28 +11,27 @@ from tensorflow.keras import *
 import presegmentation
 from feature_augmentation import *
 
-#fix random seed
-tf_seed = 0
-tf.random.set_seed(tf_seed)
+TF_SEED = 0
+tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
 
 def test_model():
 
-    #load a model
+    #Load a model
     model = models.load_model(r'saved_model/scn.h5', custom_objects={'GATConv': GATConv,'DMoNPool': DMoNPool})
 
-    fp = os.listdir(r'test_data')
+    fn_lst = os.listdir(r'test_data')
 
-    for name in fp[:]:
+    for name in fn_lst[:]:
 
-        num_neighbor = 10
+        num_neighbors = 10
         std_ratio = 0.1
-        radius = 15 # for ball query
-        quantile = 0.2 # for clustering
+        radius = 15 # Ball query
+        quantile = 0.2 # Clustering
         voxel_size = 30
-        num_sampling = 15
-        threshold = 0.02 # adjusted
+        num_samples = 15
+        threshold = 0.02 # Gradient value
 
         # print(name)
 
@@ -41,60 +40,56 @@ def test_model():
         df = pd.read_csv(path, names=['x', 'y', 'z'], sep=',')
 
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(
-            np.array(df.iloc[:, :3]))
+        pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
 
-        pcd, denoised = pcd.remove_statistical_outlier(nb_neighbors=num_neighbor, std_ratio=std_ratio)
-        atl03 = np.asarray(pcd.points)
+        pcd_denoised, _ = pcd.remove_statistical_outlier(nb_neighbors=num_neighbors, std_ratio=std_ratio)
+        atl03 = np.asarray(pcd_denoised.points)
 
-        downpcd = pcd.voxel_down_sample(voxel_size=voxel_size)
-        downpcd_point = np.asarray(downpcd.points)
-        ref_pcd = downpcd_point
+        pcd_downsampled = pcd_denoised.voxel_down_sample(voxel_size=voxel_size)
+        ref_pcd = np.asarray(pcd_downsampled.points)
 
-        scenes = presegmentation.presegmentation(ref_pcd, atl03, num_sampling, radius, quantile, threshold)
+        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold)
 
-        input_point_cloud, input_normal_vector, \
-        input_ad_matrix, input_n_ad_matrix, input_dc_vector, \
-        input_image, input_label = [], [], [], [], [], [], []
+        pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, \
+        adj_mat_normalized_lst, dc_vec_lst = [], [], [], [], [], []
 
-        for data in scenes:
+        for scene in scene_lst:
 
-            # 3d point cloud
-            downpcd = point_cloud_conversion(data, 2048)
-            input_point_cloud.append(downpcd)
+            # 3D point cloud
+            pcd_downsampled = downsample_pcd(scene, 2048)
+            pcd_lst.append(pcd_downsampled)
 
-            # normal vector
-            normal_vector = normal_vector_conversion(downpcd)
-            input_normal_vector.append(normal_vector)
+            # Normal vector
+            normal_vec = generate_normal_vec(pcd_downsampled)
+            normal_vec_lst.append(normal_vec)
 
-            # 2d image
-            image = image_conversion(data, 512, 128)
-            input_image.append(image)
+            # 2D image
+            img = generate_img(scene, 128, 512)
+            img_lst.append(img)
 
-            # 2d graph
-            A, N_A, X = graph_conversion(image, 64, 16, 1, 3, 0.315)
+            # 2D graph
+            adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, 16, 64, 1, 3, 0.315)
 
-            input_ad_matrix.append(A)
-            input_dc_vector.append(X)
-            input_n_ad_matrix.append(N_A)
+            adj_mat_lst.append(adj_mat_dense)
+            adj_mat_normalized_lst.append(adj_mat_normalzied)
+            dc_vec_lst.append(dc_vec)
 
-        input_point_cloud = np.array(input_point_cloud)
-        input_normal_vector = np.array(input_normal_vector)
-        input_ad_matrix = np.array(input_ad_matrix)
-        input_n_ad_matrix = np.array(input_n_ad_matrix)
-        input_dc_vector = np.array(input_dc_vector)
-        input_image = np.array(input_image) / 255.
+        pcd_lst = np.array(pcd_lst)
+        normal_vec_lst = np.array(normal_vec_lst)
+        img_lst = np.array(img_lst) / 255.
+        adj_mat_lst = np.array(adj_mat_lst)
+        adj_mat_normalized_lst = np.array(adj_mat_normalized_lst)
+        dc_vec_lst = np.array(dc_vec_lst)
 
         y_pred = model.predict(
-            [input_point_cloud, input_normal_vector, input_ad_matrix, input_dc_vector, input_image, input_n_ad_matrix])
+            [pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst])
 
-        # predicted scene labels
-        y_pred_classes = []
-        for label in y_pred:
-            if label > 0.5:
-                y_pred_classes.append(1)
+        # Predict scene labels
+        label_lst = []
+        for pred in y_pred:
+            if pred > 0.5:
+                label_lst.append(1)
             else:
-                y_pred_classes.append(0)
-        print(y_pred)
+                label_lst.append(0)
 
 test_model()
