@@ -277,6 +277,6 @@ def construct_feature_space(num_points=2048,
         adj_mat_normalized_lst.append(adj_mat_normalzied)
         dc_vec_lst.append(dc_vec)
 
-    print(r'Feature augmentation done.')
+    print('Feature augmentation done.')
 
     return pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, label_lst
