@@ -1,6 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
@@ -16,6 +16,14 @@ tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
 
+NUM_NEIGHBORS = 10
+STD_RATIO = 0.1
+RADIUS = 15 # Parameter of ball query
+QUANTILE = 0.2 # Parameter of clustering
+VOXEL_SIZE = 30
+NUM_SAMPLES = 15
+THRESHOLD = 0.02 # Threshold of gradient
+
 def test_model():
 
     # Load a model
@@ -25,14 +33,6 @@ def test_model():
 
     for name in fn_lst[:]:
 
-        num_neighbors = 10
-        std_ratio = 0.1
-        radius = 15 # Parameter of ball query
-        quantile = 0.2 # Parameter of clustering
-        voxel_size = 30
-        num_samples = 15
-        threshold = 0.02 # Threshold of gradient
-
         path = r'test_data//' + str(name)
 
         df = pd.read_csv(path, names=['x', 'y', 'z'], sep=',')
@@ -40,13 +40,13 @@ def test_model():
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
 
-        pcd_denoised, _ = pcd.remove_statistical_outlier(nb_neighbors=num_neighbors, std_ratio=std_ratio)
+        pcd_denoised, _ = pcd.remove_statistical_outlier(nb_neighbors=NUM_NEIGHBORS, std_ratio=STD_RATIO)
         atl03 = np.asarray(pcd_denoised.points)
 
-        pcd_downsampled = pcd_denoised.voxel_down_sample(voxel_size=voxel_size)
+        pcd_downsampled = pcd_denoised.voxel_down_sample(voxel_size=VOXEL_SIZE)
         ref_pcd = np.asarray(pcd_downsampled.points)
 
-        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold)
+        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
 
         pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, \
         adj_mat_normalized_lst, dc_vec_lst = [], [], [], [], [], []
