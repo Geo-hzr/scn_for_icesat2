@@ -91,13 +91,13 @@ def generate_pcd(atl03, num_points):
 
     return pcd
 
-def generate_normal_vec(pcd_downsampled):
+def generate_normal_vec(pcd):
+    
+    pcd_temp = o3d.geometry.PointCloud()
+    pcd_temp.points = o3d.utility.Vector3dVector(np.array(pcd))
+    pcd_temp.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.array(pcd_downsampled))
-    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
-
-    return np.asarray(pcd.normals)
+    return np.asarray(pcd_temp.normals)
 
 def generate_img(pcd, img_height, img_width):
 
@@ -161,18 +161,18 @@ def construct_feature_space(num_points=2048,
 
         df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        pcd = np.array(df.iloc[:, :num_features])
+        atl03 = np.array(df.iloc[:, :num_features])
 
         # 3D point cloud
-        pcd_downsampled = downsample_pcd(pcd, num_points)
-        pcd_lst.append(pcd_downsampled)
+        pcd = generate_pcd(atl03, num_points)
+        pcd_lst.append(pcd)
 
         # Normal vector
-        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec = generate_normal_vec(pcd)
         normal_vec_lst.append(normal_vec)
 
         # 2D img
-        img = generate_img(pcd, img_height, img_width)
+        img = generate_img(atl03, img_height, img_width)
         img_lst.append(img)
 
         # 2D graph
@@ -189,23 +189,23 @@ def construct_feature_space(num_points=2048,
 
         df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        pcd = np.array(df.iloc[:, :num_features])
+        atl03 = np.array(df.iloc[:, :num_features])
 
         r = Rotation.random()
         r_mat = r.as_matrix()
-        pcd_rotated = np.dot(r_mat, np.transpose(pcd))
-        pcd = np.transpose(pcd_rotated)
+        pcd_rotated = np.dot(r_mat, np.transpose(atl03))
+        atl03 = np.transpose(pcd_rotated)
 
         # 3D point cloud
-        pcd_downsampled = downsample_pcd(pcd, num_points)
-        pcd_lst.append(pcd_downsampled)
+        pcd = generate_pcd(atl03, num_points)
+        pcd_lst.append(pcd)
 
         # Normal vector
-        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec = generate_normal_vec(pcd)
         normal_vec_lst.append(normal_vec)
 
         # 2D image
-        img = generate_img(pcd, img_height, img_width)
+        img = generate_img(atl03, img_height, img_width)
         img_lst.append(img)
 
         # 2D graph
@@ -223,18 +223,18 @@ def construct_feature_space(num_points=2048,
 
         df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        pcd = np.array(df.iloc[:, :num_features])
+        atl03 = np.array(df.iloc[:, :num_features])
 
         # 3D point cloud
-        pcd_downsampled = downsample_pcd(pcd, num_points)
-        pcd_lst.append(pcd_downsampled)
+        pcd = generate_pcd(atl03, num_points)
+        pcd_lst.append(pcd)
 
         # Normal vector
-        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec = generate_normal_vec(pcd)
         normal_vec_lst.append(normal_vec)
 
         # 2D image
-        img = generate_img(pcd, img_height, img_width)
+        img = generate_img(atl03, img_height, img_width)
         img_lst.append(img)
 
         # 2D graph
@@ -251,23 +251,23 @@ def construct_feature_space(num_points=2048,
 
         df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
-        pcd = np.array(df.iloc[:, :num_features])
+        atl03 = np.array(df.iloc[:, :num_features])
 
         r = Rotation.random()
         r_mat = r.as_matrix()
-        pcd_rotated = np.dot(r_mat, np.transpose(pcd))
-        pcd = np.transpose(pcd_rotated)
+        pcd_rotated = np.dot(r_mat, np.transpose(atl03))
+        atl03 = np.transpose(pcd_rotated)
 
         # 3D point cloud
-        pcd_downsampled = downsample_pcd(pcd, num_points)
-        pcd_lst.append(pcd_downsampled)
+        pcd = generate_pcd(atl03, num_points)
+        pcd_lst.append(pcd)
 
         # Normal vector
-        normal_vec = generate_normal_vec(pcd_downsampled)
+        normal_vec = generate_normal_vec(pcd)
         normal_vec_lst.append(normal_vec)
 
         # 2D img
-        img = generate_img(pcd, img_height, img_width)
+        img = generate_img(atl03, img_height, img_width)
         img_lst.append(img)
 
         # 2D graph
@@ -277,6 +277,6 @@ def construct_feature_space(num_points=2048,
         adj_mat_normalized_lst.append(adj_mat_normalzied)
         dc_vec_lst.append(dc_vec)
 
-    print('Feature augmentation done.')
+    print(r'Feature augmentation done.')
 
     return pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, label_lst
