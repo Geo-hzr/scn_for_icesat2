@@ -27,13 +27,11 @@ def test_model():
 
         num_neighbors = 10
         std_ratio = 0.1
-        radius = 15 # Ball query
-        quantile = 0.2 # Clustering
+        radius = 15 # Ball query parameter
+        quantile = 0.2 # Clustering parameter
         voxel_size = 30
         num_samples = 15
-        threshold = 0.02 # Gradient value
-
-        # print(name)
+        threshold = 0.02 # Gradient threshold
 
         path = r'test_data//' + str(name)
 
@@ -56,11 +54,11 @@ def test_model():
         for scene in scene_lst:
 
             # 3D point cloud
-            pcd_downsampled = downsample_pcd(scene, 2048)
-            pcd_lst.append(pcd_downsampled)
+            pcd = generate_pcd(scene, 2048)
+            pcd_lst.append(pcd)
 
             # Normal vector
-            normal_vec = generate_normal_vec(pcd_downsampled)
+            normal_vec = generate_normal_vec(pcd)
             normal_vec_lst.append(normal_vec)
 
             # 2D image
@@ -91,5 +89,6 @@ def test_model():
                 label_lst.append(1)
             else:
                 label_lst.append(0)
+        print(y_pred)
 
 test_model()
