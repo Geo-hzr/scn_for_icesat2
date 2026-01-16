@@ -84,12 +84,12 @@ def construct_graph(img, r_coef, t_coef):
 
     return graph
 
-def downsample_pcd(atl03, num_points):
+def generate_pcd(atl03, num_points):
 
     centroid_mat = fps(atl03, num_points)
-    pcd_downsampled = normalize_pcd(atl03[centroid_mat][0])
+    pcd = normalize_pcd(atl03[centroid_mat][0])
 
-    return pcd_downsampled
+    return pcd
 
 def generate_normal_vec(pcd_downsampled):
 
