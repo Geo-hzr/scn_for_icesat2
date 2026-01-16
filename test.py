@@ -27,11 +27,11 @@ def test_model():
 
         num_neighbors = 10
         std_ratio = 0.1
-        radius = 15 # Ball query parameter
-        quantile = 0.2 # Clustering parameter
+        radius = 15 # Parameter of ball query
+        quantile = 0.2 # Parameter of clustering
         voxel_size = 30
         num_samples = 15
-        threshold = 0.02 # Gradient threshold
+        threshold = 0.02 # Threshold of gradient
 
         path = r'test_data//' + str(name)
 
