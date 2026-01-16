@@ -1,7 +1,7 @@
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
@@ -14,6 +14,9 @@ TF_SEED = 0
 tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
+
+PATIENCE = 3
+VALIDATION_SPLIT = 0.7
 
 def train_model():
 
@@ -43,12 +46,11 @@ def train_model():
 
     print(pcd_lst.shape, normal_vec_lst.shape, img_lst.shape, adj_mat_lst.shape, dc_vec_lst.shape, label_lst.shape)
 
-    patience = 3
-    callback = callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
-    validation_split = 0.7
+    callback = callbacks.EarlyStopping(monitor='val_loss', patience=PATIENCE, mode='min')
+
     history = model.fit(
         [pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst],
-        label_lst, epochs=20, batch_size=32, validation_split=validation_split, callbacks=[callback])
+        label_lst, epochs=20, batch_size=32, validation_split=VALIDATION_SPLIT, callbacks=[callback])
 
     print(history.history.keys())
 
