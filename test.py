@@ -85,7 +85,7 @@ def test_model():
         # Predict scene labels
         label_lst = []
         for pred in y_pred:
-            if pred > 0.5:
+            if pred > 0.5: # Threshold of prediction
                 label_lst.append(1)
             else:
                 label_lst.append(0)
