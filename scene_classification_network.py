@@ -57,9 +57,9 @@ def build_pointnet(inputs, normal_vec, num_channels):
     f = BatchNormalization()(f)
     f = LeakyReLU(0.01)(f)
 
-    x = GlobalMaxPool1D()(f)
+    outputs = GlobalMaxPool1D()(f)
 
-    return x
+    return outputs
 
 def build_densenet(inputs, num_classes):
 
@@ -69,13 +69,12 @@ def build_densenet(inputs, num_classes):
         include_top=False,
         input_tensor=inputs,
         classes=num_classes)
-
     dn121.trainable = False
 
     x = dn121(inputs)
-    x = GlobalAvgPool2D()(x)
+    outputs = GlobalAvgPool2D()(x)
 
-    return x
+    return outputs
 
 def build_gan(inputs, adj_mat, adj_mat_normalized, num_channels, num_heads, num_nodes):
 
@@ -85,9 +84,9 @@ def build_gan(inputs, adj_mat, adj_mat_normalized, num_channels, num_heads, num_
     x = BatchNormalization()(x)
     x, _ = DMoNPool(k=num_nodes // 2, mlp_hidden=[num_nodes])([x, adj_mat_normalized])
     x = LeakyReLU(0.01)(x)
-    x = GlobalMaxPool1D()(x)
+    outputs = GlobalMaxPool1D()(x)
 
-    return x
+    return outputs
 
 def build_scn(num_points=2048,
               num_features=3,
@@ -97,22 +96,22 @@ def build_scn(num_points=2048,
               num_channels=1,
               num_classes=2):
 
-    pcd = Input(shape=(num_points, num_features))
+    inputs_pcd = Input(shape=(num_points, num_features))
 
-    normal_vec = Input(shape=(num_points, num_features))
+    inputs_normal_vec = Input(shape=(num_points, num_features))
 
-    img = Input(shape=(img_height, img_width, 3))
+    inputs_img = Input(shape=(img_height, img_width, 3))
 
-    adj_mat = Input(shape=(num_nodes, num_nodes))
+    inputs_adj_mat = Input(shape=(num_nodes, num_nodes))
 
-    adj_mat_normalized = Input(shape=(num_nodes, num_nodes))
+    inputs_adj_mat_normalized = Input(shape=(num_nodes, num_nodes))
 
-    dc_vec = Input(shape=(num_nodes, num_channels))
+    inputs_dc_vec = Input(shape=(num_nodes, num_channels))
 
-    f1 = build_pointnet(pcd, normal_vec, num_channels=64) # 16
-    f2 = build_densenet(img, num_classes)
-    f3 = build_gan(dc_vec, adj_mat, adj_mat_normalized,
-                   num_channels=64, num_heads=16, num_nodes=num_nodes) # 32 8
+    f1 = build_pointnet(inputs_pcd, inputs_normal_vec, num_channels=64)
+    f2 = build_densenet(inputs_img, num_classes)
+    f3 = build_gan(inputs_dc_vec, inputs_adj_mat, inputs_adj_mat_normalized,
+                   num_channels=64, num_heads=16, num_nodes=num_nodes)
 
     x = Concatenate()([f1, f2, f3])
 
@@ -123,12 +122,12 @@ def build_scn(num_points=2048,
     x = Dense(1024, activation='relu')(x)
     x = Dense(512, activation='relu')(x)
 
-    output = Dense(1, activation='sigmoid')(x)
+    outputs = Dense(1, activation='sigmoid')(x)
 
     model = Model(
-        inputs=[pcd, normal_vec, img, adj_mat, adj_mat_normalized, dc_vec],
-        outputs=output)
+        inputs=[inputs_pcd, inputs_normal_vec, inputs_img, inputs_adj_mat, inputs_adj_mat_normalized, inputs_dc_vec],
+        outputs=outputs)
 
-    print('Model initialization done.')
+    print(r'Model initialization done.')
 
     return model
