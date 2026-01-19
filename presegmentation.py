@@ -7,7 +7,7 @@ from findpeaks import findpeaks
 
 def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
 
-    output = [[] for i in range(ref_pcd.shape[0])]
+    output = [[] for _ in range(ref_pcd.shape[0])]
 
     grad_lst = []
 
@@ -120,6 +120,6 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
         if coord_lst.shape[0] != 0:
             scene_lst.append(coord_lst)
 
-    print('Presegmentation done.')
+    print(r'Presegmentation done.')
 
     return scene_lst
