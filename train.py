@@ -34,7 +34,6 @@ def train_model():
 
     idx_lst = [i for i in range(len(label_lst))]
     np.random.shuffle(idx_lst)
-    idx_lst = idx_lst[:]
 
     pcd_lst = np.array(pcd_lst)[idx_lst]
     normal_vec_lst = np.array(normal_vec_lst)[idx_lst]
