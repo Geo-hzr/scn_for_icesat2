@@ -12,7 +12,7 @@ from scipy.spatial.transform import Rotation
 
 def fps(pcd, num_samples):
 
-    pcd = np.expand_dims(pcd, axis=0)  # 1, N, 3
+    pcd = np.expand_dims(pcd, axis=0)
     batch_size, num_points, _ = pcd.shape
     centroid_mat = np.zeros((batch_size, num_samples), dtype=np.long)
     dist_mat = np.ones((batch_size, num_points)) * 1e10
@@ -36,6 +36,42 @@ def normalize_pcd(pcd):
     pcd_normalized = pcd / factor
 
     return pcd_normalized
+
+def generate_pcd(atl03, num_points):
+
+    centroid_mat = fps(atl03, num_points)
+    pcd = normalize_pcd(atl03[centroid_mat][0])
+
+    return pcd
+
+def generate_normal_vec(pcd):
+
+    pcd_temp = o3d.geometry.PointCloud()
+    pcd_temp.points = o3d.utility.Vector3dVector(np.array(pcd))
+    pcd_temp.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
+
+    return np.asarray(pcd_temp.normals)
+
+def generate_img(pcd, img_height, img_width):
+
+    fig = plt.figure(figsize=(img_width / 100, img_height / 100), dpi=100)
+    ax = plt.gca()
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    plt.scatter(pcd[:, 0], pcd[:, 2], color='black', s=0.01)
+    plt.xlim((np.min(pcd[:, 0]), np.max(pcd[:, 0])))
+    plt.ylim((np.min(pcd[:, 2]), np.max(pcd[:, 2])))
+    plt.axis('off')
+    fig.canvas.draw()
+    w, h = fig.canvas.get_width_height()
+    buf = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    buf.shape = (w, h, 3)
+    buf = np.roll(buf, 3, axis=2)
+    img = Image.frombytes('RGB', (w, h), buf.tostring())
+    img = np.asarray(img)
+    plt.close()
+
+    return img
 
 @jit(nopython=True)
 def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
@@ -84,47 +120,11 @@ def construct_graph(img, r_coef, t_coef):
 
     return graph
 
-def generate_pcd(atl03, num_points):
-
-    centroid_mat = fps(atl03, num_points)
-    pcd = normalize_pcd(atl03[centroid_mat][0])
-
-    return pcd
-
-def generate_normal_vec(pcd):
-    
-    pcd_temp = o3d.geometry.PointCloud()
-    pcd_temp.points = o3d.utility.Vector3dVector(np.array(pcd))
-    pcd_temp.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
-
-    return np.asarray(pcd_temp.normals)
-
-def generate_img(pcd, img_height, img_width):
-
-    fig = plt.figure(figsize=(img_width / 100, img_height / 100), dpi=100)
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-    plt.scatter(pcd[:, 0], pcd[:, 2], color='black', s=0.01)
-    plt.xlim((np.min(pcd[:, 0]), np.max(pcd[:, 0])))
-    plt.ylim((np.min(pcd[:, 2]), np.max(pcd[:, 2])))
-    plt.axis('off')
-    fig.canvas.draw()
-    w, h = fig.canvas.get_width_height()
-    buf = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    buf.shape = (w, h, 3)
-    buf = np.roll(buf, 3, axis=2)
-    img = Image.frombytes('RGB', (w, h), buf.tostring())
-    img = np.asarray(img)
-    plt.close()
-
-    return img
-
-def generate_graph(img, graph_height, graph_width, num_channels, r, t):
+def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef):
 
     img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     img_gray = cv2.resize(img_gray, (graph_width, graph_height))
-    graph = construct_graph(np.array(img_gray, dtype=np.uint8), r, t)
+    graph = construct_graph(np.array(img_gray, dtype=np.uint8), r_coef, t_coef)
     dc = nx.degree_centrality(graph)
     adj_mat = nx.adjacency_matrix(graph)
     adj_mat_dense = adj_mat.todense()
