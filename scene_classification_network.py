@@ -88,13 +88,7 @@ def build_gan(inputs, adj_mat, adj_mat_normalized, num_channels, num_heads, num_
 
     return outputs
 
-def build_scn(num_points=2048,
-              num_features=3,
-              img_height=128,
-              img_width=512,
-              num_nodes=1024,
-              num_channels=1,
-              num_classes=2):
+def build_scn(num_points=2048, num_features=3, img_height=128, img_width=512, num_nodes=1024, num_channels=1, num_classes=2):
 
     inputs_pcd = Input(shape=(num_points, num_features))
 
