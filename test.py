@@ -33,9 +33,7 @@ def test_model():
 
     for name in name_lst[:]:
 
-        path = r'test_data//' + str(name)
-
-        df = pd.read_csv(path, names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(r'test_data//' + str(name), names=['x', 'y', 'z'], sep=',')
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
@@ -79,8 +77,7 @@ def test_model():
         adj_mat_normalized_lst = np.array(adj_mat_normalized_lst)
         dc_vec_lst = np.array(dc_vec_lst)
 
-        y_pred = model.predict(
-            [pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst])
+        y_pred = model.predict([pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst])
 
         # Predict scene labels
         label_lst = []
