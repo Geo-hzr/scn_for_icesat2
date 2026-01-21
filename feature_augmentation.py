@@ -133,21 +133,11 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
     return adj_mat_dense, adj_mat_normalized, dc_vec
 
-def construct_feature_space(num_points=2048,
-                            num_features=3,
-                            img_height=128,
-                            img_width=512,
-                            graph_height=16,
-                            graph_width=64,
-                            num_channels=1,
-                            r_coef=3,
-                            t_coef=0.315,
-                            src_path_positive=r'train_data/positive',
-                            src_path_negative=r'train_data/negative'):
-
-    name_lst_positive = os.listdir(src_path_positive)
+def construct_feature_space(num_points=2048, num_features=3, img_height=128, img_width=512, graph_height=16, graph_width=64, num_channels=1, r_coef=3, t_coef=0.315, src_path_negative=r'train_data/negative', src_path_positive=r'train_data/positive'):
 
     name_lst_negative = os.listdir(src_path_negative)
+
+    name_lst_positive = os.listdir(src_path_positive)
 
     pcd_lst, normal_vec_lst, \
     adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, \
