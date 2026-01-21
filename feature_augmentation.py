@@ -128,10 +128,10 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
     dc = nx.degree_centrality(graph)
     adj_mat = nx.adjacency_matrix(graph)
     adj_mat_dense = adj_mat.todense()
-    adj_mat_normalzied = normalized_adjacency(adj_mat_dense)
+    adj_mat_normalized = normalized_adjacency(adj_mat_dense)
     dc_vec = np.array(list(dc.values())).reshape((graph_height * graph_width, num_channels))
 
-    return adj_mat_dense, adj_mat_normalzied, dc_vec
+    return adj_mat_dense, adj_mat_normalized, dc_vec
 
 def construct_feature_space(num_points=2048,
                             num_features=3,
@@ -142,12 +142,12 @@ def construct_feature_space(num_points=2048,
                             num_channels=1,
                             r_coef=3,
                             t_coef=0.315,
-                            src_positive=r'train_data/positive',
-                            src_negative=r'train_data/negative'):
+                            src_path_positive=r'train_data/positive',
+                            src_path_negative=r'train_data/negative'):
 
-    name_lst_positive = os.listdir(src_positive)
+    name_lst_positive = os.listdir(src_path_positive)
 
-    name_lst_negative = os.listdir(src_negative)
+    name_lst_negative = os.listdir(src_path_negative)
 
     pcd_lst, normal_vec_lst, \
     adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, \
@@ -159,7 +159,7 @@ def construct_feature_space(num_points=2048,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_path_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -176,10 +176,10 @@ def construct_feature_space(num_points=2048,
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
         adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        adj_mat_normalized_lst.append(adj_mat_normalized)
         dc_vec_lst.append(dc_vec)
 
     # Optional
@@ -187,7 +187,7 @@ def construct_feature_space(num_points=2048,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_path_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -209,10 +209,10 @@ def construct_feature_space(num_points=2048,
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
         adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        adj_mat_normalized_lst.append(adj_mat_normalized)
         dc_vec_lst.append(dc_vec)
 
     class_label = 1
@@ -221,7 +221,7 @@ def construct_feature_space(num_points=2048,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_path_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -238,10 +238,10 @@ def construct_feature_space(num_points=2048,
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
         adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        adj_mat_normalized_lst.append(adj_mat_normalized)
         dc_vec_lst.append(dc_vec)
 
     # Optional
@@ -249,7 +249,7 @@ def construct_feature_space(num_points=2048,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_path_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -271,10 +271,10 @@ def construct_feature_space(num_points=2048,
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, graph_width, graph_height, num_channels, r_coef, t_coef)
+        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_width, graph_height, num_channels, r_coef, t_coef)
 
         adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalzied)
+        adj_mat_normalized_lst.append(adj_mat_normalized)
         dc_vec_lst.append(dc_vec)
 
     print(r'Feature augmentation done.')
