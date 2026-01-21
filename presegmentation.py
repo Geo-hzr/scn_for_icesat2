@@ -84,20 +84,15 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
         else:
             location = zip(x_clustered[i], z_clustered[i])
             df = pd.DataFrame(list(location))
-            km = KMeans(n_clusters=num_points,
-                        init='k-means++',  # random，k-means++
-                        n_init=10,
-                        max_iter=100,
-                        tol=1e-2,
-                        random_state=0)
+            km = KMeans(n_clusters=num_points, init='k-means++', n_init=10, max_iter=100, tol=1e-2, random_state=0)
             _ = km.fit_predict(df)
             label_lst_temp = km.labels_
             num_labels_temp = np.max(label_lst_temp) + 1
             x_temp = [[] for _ in range(num_labels_temp)]
             for label, num in zip(label_lst_temp, range(0, len(label_lst_temp) + 1)):
                 x_temp[label].append(x_clustered[i][num])
-            for i in range(num_labels_temp):
-                x_referenced.append(x_temp[i])
+            for j in range(num_labels_temp):
+                x_referenced.append(x_temp[j])
 
     boundary_lst = []
     for i in range(len(x_referenced)):
