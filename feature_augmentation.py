@@ -139,9 +139,7 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
 
     name_lst_positive = os.listdir(src_path_positive)
 
-    pcd_lst, normal_vec_lst, \
-    adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, \
-    img_lst, label_lst = [], [], [], [], [], [], []
+    pcd_lst, normal_vec_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, img_lst, label_lst = [], [], [], [], [], [], []
 
     class_label = 0
 
