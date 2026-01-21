@@ -142,12 +142,12 @@ def construct_feature_space(num_points=2048,
                             num_channels=1,
                             r_coef=3,
                             t_coef=0.315,
-                            fp_positive=r'train_data/positive',
-                            fp_negative=r'train_data/negative'):
+                            src_positive=r'train_data/positive',
+                            src_negative=r'train_data/negative'):
 
-    fn_lst_positive = os.listdir(fp_positive)
+    name_lst_positive = os.listdir(src_positive)
 
-    fn_lst_negative = os.listdir(fp_negative)
+    name_lst_negative = os.listdir(src_negative)
 
     pcd_lst, normal_vec_lst, \
     adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, \
@@ -155,11 +155,11 @@ def construct_feature_space(num_points=2048,
 
     class_label = 0
 
-    for name in fn_lst_negative[:]:
+    for name in name_lst_negative[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -183,11 +183,11 @@ def construct_feature_space(num_points=2048,
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in fn_lst_negative[:]:
+    for name in name_lst_negative[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(fp_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -217,11 +217,11 @@ def construct_feature_space(num_points=2048,
 
     class_label = 1
 
-    for name in fn_lst_positive[:]:
+    for name in name_lst_positive[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -245,11 +245,11 @@ def construct_feature_space(num_points=2048,
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in fn_lst_positive[:]:
+    for name in name_lst_positive[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(fp_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(src_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
