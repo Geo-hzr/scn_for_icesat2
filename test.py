@@ -29,9 +29,9 @@ def test_model():
     # Load a model
     model = models.load_model(r'saved_model/scn.h5', custom_objects={'GATConv': GATConv,'DMoNPool': DMoNPool})
 
-    fn_lst = os.listdir(r'test_data')
+    name_lst = os.listdir(r'test_data')
 
-    for name in fn_lst[:]:
+    for name in name_lst[:]:
 
         path = r'test_data//' + str(name)
 
