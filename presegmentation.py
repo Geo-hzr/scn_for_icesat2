@@ -7,7 +7,7 @@ from findpeaks import findpeaks
 
 def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
 
-    output = [[] for _ in range(ref_pcd.shape[0])]
+    seg_lst = [[] for _ in range(ref_pcd.shape[0])]
 
     grad_lst = []
 
@@ -19,7 +19,7 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
         idx_lst = tree.query_ball_point(src_pt, radius, return_sorted=True)
         if len(idx_lst) >= num_samples:
             for tgt_pt in ref_pcd[idx_lst[:num_samples]]:
-                output[i].append(tgt_pt)
+                seg_lst[i].append(tgt_pt)
         else:
             ratio = 1.1
             flag = True
@@ -27,16 +27,16 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
                 idx_lst_extended = tree.query_ball_point(src_pt, radius * ratio, return_sorted=True)
                 if len(idx_lst_extended) >= num_samples:
                     for tgt_pt in ref_pcd[idx_lst_extended[:num_samples]]:
-                        output[i].append(tgt_pt)
+                        seg_lst[i].append(tgt_pt)
                     flag = False
                 else:
                     ratio += 0.1
 
         i += 1
 
-    output = np.array(output)
+    seg_lst = np.array(seg_lst)
 
-    for seg in output:
+    for seg in seg_lst:
         x = np.array(seg[:, 0]).reshape(-1, 1)
         z = np.array(seg[:, 2]).reshape(-1, 1)
         pf = PolynomialFeatures(degree=1)
