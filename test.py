@@ -46,8 +46,7 @@ def test_model():
 
         scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
 
-        pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, \
-        adj_mat_normalized_lst, dc_vec_lst = [], [], [], [], [], []
+        pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst = [], [], [], [], [], []
 
         for scene in scene_lst:
 
