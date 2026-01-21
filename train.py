@@ -24,16 +24,13 @@ def train_model():
 
     model.summary()
 
-    model.compile(optimizer=optimizers.Adam(learning_rate=1e-4, decay=1e-8, clipvalue=1.0),
-                  loss=losses.binary_crossentropy,
-                  metrics=[metrics.binary_accuracy])
+    model.compile(optimizer=optimizers.Adam(learning_rate=1e-4, decay=1e-8, clipvalue=1.0), loss=losses.binary_crossentropy, metrics=[metrics.binary_accuracy])
 
-    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, \
-    adj_mat_normalized_lst, dc_vec_lst, \
-    label_lst = feature_augmentation.construct_feature_space()
+    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, label_lst = feature_augmentation.construct_feature_space()
 
     idx_lst = [i for i in range(len(label_lst))]
     np.random.shuffle(idx_lst)
+    idx_lst = idx_lst[:]
 
     pcd_lst = np.array(pcd_lst)[idx_lst]
     normal_vec_lst = np.array(normal_vec_lst)[idx_lst]
@@ -47,12 +44,8 @@ def train_model():
 
     callback = callbacks.EarlyStopping(monitor='val_loss', patience=PATIENCE, mode='min')
 
-    history = model.fit(
-        [pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst],
-        label_lst, epochs=20, batch_size=32, validation_split=VALIDATION_SPLIT, callbacks=[callback])
-
-    print(history.history.keys())
-
+    history = model.fit([pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst], label_lst, epochs=20, batch_size=32, validation_split=VALIDATION_SPLIT, callbacks=[callback])
+    
     acc = history.history['binary_accuracy']
     loss = history.history['loss']
     epochs = range(1, len(acc) + 1)
@@ -68,8 +61,6 @@ def train_model():
     plt.grid(color='black', linestyle='--')
     plt.show()
 
-    output_path =r'saved_model/scn'
-
-    model.save(output_path + r'.h5')
+    model.save(r'saved_model/scn.h5')
 
 train_model()
