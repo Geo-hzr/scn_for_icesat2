@@ -18,11 +18,11 @@ tf.data.experimental.enable_debug_mode()
 
 NUM_NEIGHBORS = 10
 STD_RATIO = 0.1
-RADIUS = 15 # Parameter of ball query
-QUANTILE = 0.2 # Parameter of clustering
+RADIUS = 15  # Parameter of ball query
+QUANTILE = 0.2  # Parameter of clustering
 VOXEL_SIZE = 30
 NUM_SAMPLES = 15
-THRESHOLD = 0.02 # Threshold of gradient
+THRESHOLD = 0.02  # Threshold of gradient
 
 def test_model():
 
@@ -82,7 +82,7 @@ def test_model():
         # Predict scene labels
         label_lst = []
         for pred in y_pred:
-            if pred > 0.5: # Threshold of prediction
+            if pred > 0.5:  # Threshold of prediction
                 label_lst.append(1)
             else:
                 label_lst.append(0)
