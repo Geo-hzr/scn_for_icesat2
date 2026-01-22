@@ -64,7 +64,11 @@ def build_pointnet(inputs, normal_vec, num_channels):
 def build_densenet(inputs, num_classes):
 
     model_path = r'pretrained_model/densenet121_weights_tf_dim_ordering_tf_kernels_notop.h5'
-    dn121 = DenseNet121(weights=model_path, include_top=False, input_tensor=inputs, classes=num_classes)
+    dn121 = DenseNet121(
+        weights=model_path,
+        include_top=False,
+        input_tensor=inputs,
+        classes=num_classes)
     dn121.trainable = False
 
     x = dn121(inputs)
@@ -72,13 +76,13 @@ def build_densenet(inputs, num_classes):
 
     return outputs
 
-def build_gan(inputs, adj_mat, adj_mat_normalized, num_channels, num_heads, num_nodes):
+def build_gan(inputs, adj_mat, normalized_adj_mat, num_channels, num_heads, num_nodes):
 
     x = BatchNormalization()(inputs)
     x = GATConv(channels=num_channels, attn_heads=num_heads)([x, adj_mat])
     x = LeakyReLU(0.01)(x)
     x = BatchNormalization()(x)
-    x, _ = DMoNPool(k=num_nodes // 2, mlp_hidden=[num_nodes])([x, adj_mat_normalized])
+    x, _ = DMoNPool(k=num_nodes // 2, mlp_hidden=[num_nodes])([x, normalized_adj_mat])
     x = LeakyReLU(0.01)(x)
     outputs = GlobalMaxPool1D()(x)
 
@@ -94,13 +98,13 @@ def build_scn(num_points=2048, num_features=3, img_height=128, img_width=512, nu
 
     inputs_adj_mat = Input(shape=(num_nodes, num_nodes))
 
-    inputs_adj_mat_normalized = Input(shape=(num_nodes, num_nodes))
+    inputs_normalized_adj_mat = Input(shape=(num_nodes, num_nodes))
 
     inputs_dc_vec = Input(shape=(num_nodes, num_channels))
 
     f1 = build_pointnet(inputs_pcd, inputs_normal_vec, num_channels=64)
     f2 = build_densenet(inputs_img, num_classes)
-    f3 = build_gan(inputs_dc_vec, inputs_adj_mat, inputs_adj_mat_normalized, num_channels=64, num_heads=16, num_nodes=num_nodes)
+    f3 = build_gan(inputs_dc_vec, inputs_adj_mat, inputs_normalized_adj_mat, num_channels=64, num_heads=16, num_nodes=num_nodes)
 
     x = Concatenate()([f1, f2, f3])
 
@@ -113,7 +117,7 @@ def build_scn(num_points=2048, num_features=3, img_height=128, img_width=512, nu
 
     outputs = Dense(1, activation='sigmoid')(x)
 
-    model = Model(inputs=[inputs_pcd, inputs_normal_vec, inputs_img, inputs_adj_mat, inputs_adj_mat_normalized, inputs_dc_vec], outputs=outputs)
+    model = Model(inputs=[inputs_pcd, inputs_normal_vec, inputs_img, inputs_adj_mat, inputs_normalized_adj_mat, inputs_dc_vec], outputs=outputs)
 
     print(r'Model initialization done.')
 
