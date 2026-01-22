@@ -12,7 +12,7 @@ from scipy.spatial.transform import Rotation
 
 def fps(pcd, num_samples):
 
-    pcd = np.expand_dims(pcd, axis=0)
+    pcd = np.expand_dims(pcd, axis=0)  # (1, N, 3)
     batch_size, num_points, _ = pcd.shape
     centroid_mat = np.zeros((batch_size, num_samples), dtype=np.long)
     dist_mat = np.ones((batch_size, num_points)) * 1e10
@@ -33,9 +33,9 @@ def normalize_pcd(pcd):
     centroid = np.mean(pcd, axis=0)
     pcd = pcd - centroid
     factor = np.max(np.sqrt(np.sum(pcd ** 2, axis=1)))
-    pcd_normalized = pcd / factor
+    normalized_pcd = pcd / factor
 
-    return pcd_normalized
+    return normalized_pcd
 
 def generate_pcd(atl03, num_points):
 
@@ -46,11 +46,11 @@ def generate_pcd(atl03, num_points):
 
 def generate_normal_vec(pcd):
 
-    pcd_temp = o3d.geometry.PointCloud()
-    pcd_temp.points = o3d.utility.Vector3dVector(np.array(pcd))
-    pcd_temp.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
+    temp_pcd = o3d.geometry.PointCloud()
+    temp_pcd.points = o3d.utility.Vector3dVector(np.array(pcd))
+    temp_pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
 
-    return np.asarray(pcd_temp.normals)
+    return np.asarray(temp_pcd.normals)
 
 def generate_img(pcd, img_height, img_width):
 
@@ -74,7 +74,7 @@ def generate_img(pcd, img_height, img_width):
     return img
 
 @jit(nopython=True)
-def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
+def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
 
     height_lst = []
     width_lst = []
@@ -83,20 +83,18 @@ def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
             height_lst.append(i)
             width_lst.append(j)
 
-    dist_mat = np.zeros((graph_height * graph_width, graph_height * graph_width))
     pair_lst = []
     weight_lst = []
 
     for i in range(graph_height * graph_width):
         for j in range(i, graph_height * graph_width):
             d = np.sqrt(np.square(height_lst[i] - height_lst[j]) + np.square(width_lst[i] - width_lst[j]))
-            dist_mat[i][j] = d
             w = (np.square(d) + (np.square(r_coef) * np.abs(px_lst[i] - px_lst[j]) / 255)) / (2 * np.square(r_coef))
             if d <= r_coef and w <= t_coef:
                 pair_lst.append([i, j])
                 weight_lst.append(w)
 
-    return pair_lst, dist_mat, weight_lst
+    return pair_lst, weight_lst
 
 def construct_graph(img, r_coef, t_coef):
 
@@ -113,7 +111,7 @@ def construct_graph(img, r_coef, t_coef):
 
     px_lst = np.array(px_lst)
 
-    pair_lst, dist_mat, weight_lst = detect_graph_edge(img_height, img_width, px_lst, r_coef, t_coef)
+    pair_lst, weight_lst = detect_graph_edges(img_height, img_width, px_lst, r_coef, t_coef)
 
     for pair, weight in zip(pair_lst, weight_lst):
         graph.add_edge(pair[0], pair[1], weight=weight)
@@ -122,32 +120,31 @@ def construct_graph(img, r_coef, t_coef):
 
 def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef):
 
-    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    img_gray = cv2.resize(img_gray, (graph_width, graph_height))
-    graph = construct_graph(np.array(img_gray, dtype=np.uint8), r_coef, t_coef)
-    dc = nx.degree_centrality(graph)
+    gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray_img = cv2.resize(gray_img, (graph_width, graph_height))
+    graph = construct_graph(np.array(gray_img, dtype=np.uint8), r_coef, t_coef)
     adj_mat = nx.adjacency_matrix(graph)
-    adj_mat_dense = adj_mat.todense()
-    adj_mat_normalized = normalized_adjacency(adj_mat_dense)
-    dc_vec = np.array(list(dc.values())).reshape((graph_height * graph_width, num_channels))
+    dense_adj_mat = adj_mat.todense()
+    normalized_adj_mat = normalized_adjacency(dense_adj_mat)
+    dc_vec = np.array(list(nx.degree_centrality(graph).values())).reshape((graph_height * graph_width, num_channels))
 
-    return adj_mat_dense, adj_mat_normalized, dc_vec
+    return dense_adj_mat, normalized_adj_mat, dc_vec
 
-def construct_feature_space(num_points=2048, num_features=3, img_height=128, img_width=512, graph_height=16, graph_width=64, num_channels=1, r_coef=3, t_coef=0.315, src_path_negative=r'train_data/negative', src_path_positive=r'train_data/positive'):
+def construct_feature_space(num_points=2048, num_features=3, img_height=128, img_width=512, graph_height=16, graph_width=64, num_channels=1, r_coef=3, t_coef=0.315, negative_src_path=r'train_data/negative', positive_src_path=r'train_data/positive'):
 
-    name_lst_negative = os.listdir(src_path_negative)
+    negative_name_lst = os.listdir(negative_src_path)
 
-    name_lst_positive = os.listdir(src_path_positive)
+    positive_name_lst = os.listdir(positive_src_path)
 
-    pcd_lst, normal_vec_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, img_lst, label_lst = [], [], [], [], [], [], []
+    pcd_lst, normal_vec_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst, img_lst, label_lst = [], [], [], [], [], [], []
 
     class_label = 0
 
-    for name in name_lst_negative[:]:
+    for name in negative_name_lst[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_path_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -164,31 +161,31 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        dense_adj_mat, normalized_adj_mat, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
-        adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalized)
+        adj_mat_lst.append(dense_adj_mat)
+        normalized_adj_mat_lst.append(normalized_adj_mat)
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in name_lst_negative[:]:
+    for name in negative_name_lst[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_path_negative + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
         r = Rotation.random()
         r_mat = r.as_matrix()
-        pcd_rotated = np.dot(r_mat, np.transpose(atl03))
-        atl03 = np.transpose(pcd_rotated)
+        rotated_pcd = np.dot(r_mat, np.transpose(atl03))
+        atl03 = np.transpose(rotated_pcd)
 
         # 3D point cloud
         pcd = generate_pcd(atl03, num_points)
         pcd_lst.append(pcd)
 
-        # Normal vector
+        # Normal vectors
         normal_vec = generate_normal_vec(pcd)
         normal_vec_lst.append(normal_vec)
 
@@ -197,19 +194,19 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        dense_adj_mat, normalized_adj_mat, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
-        adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalized)
+        adj_mat_lst.append(dense_adj_mat)
+        normalized_adj_mat_lst.append(normalized_adj_mat)
         dc_vec_lst.append(dc_vec)
 
     class_label = 1
 
-    for name in name_lst_positive[:]:
+    for name in positive_name_lst[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_path_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -226,25 +223,25 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
+        dense_adj_mat, normalized_adj_mat, dc_vec = generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
-        adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalized)
+        adj_mat_lst.append(dense_adj_mat)
+        normalized_adj_mat_lst.append(normalized_adj_mat)
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in name_lst_positive[:]:
+    for name in positive_name_lst[:]:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(src_path_positive + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
         r = Rotation.random()
         r_mat = r.as_matrix()
-        pcd_rotated = np.dot(r_mat, np.transpose(atl03))
-        atl03 = np.transpose(pcd_rotated)
+        rotated_pcd = np.dot(r_mat, np.transpose(atl03))
+        atl03 = np.transpose(rotated_pcd)
 
         # 3D point cloud
         pcd = generate_pcd(atl03, num_points)
@@ -259,12 +256,12 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         img_lst.append(img)
 
         # 2D graph
-        adj_mat_dense, adj_mat_normalized, dc_vec = generate_graph(img, graph_width, graph_height, num_channels, r_coef, t_coef)
+        dense_adj_mat, normalized_adj_mat, dc_vec = generate_graph(img, graph_width, graph_height, num_channels, r_coef, t_coef)
 
-        adj_mat_lst.append(adj_mat_dense)
-        adj_mat_normalized_lst.append(adj_mat_normalized)
+        adj_mat_lst.append(dense_adj_mat)
+        normalized_adj_mat_lst.append(normalized_adj_mat)
         dc_vec_lst.append(dc_vec)
 
     print(r'Feature augmentation done.')
 
-    return pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst, label_lst
+    return pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst, label_lst
