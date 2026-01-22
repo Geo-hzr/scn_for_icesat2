@@ -74,7 +74,7 @@ def generate_img(pcd, img_height, img_width):
     return img
 
 @jit(nopython=True)
-def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
+def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
 
     height_lst = []
     width_lst = []
@@ -111,7 +111,7 @@ def construct_graph(img, r_coef, t_coef):
 
     px_lst = np.array(px_lst)
 
-    pair_lst, weight_lst = detect_graph_edges(img_height, img_width, px_lst, r_coef, t_coef)
+    pair_lst, weight_lst = detect_graph_edge(img_height, img_width, px_lst, r_coef, t_coef)
 
     for pair, weight in zip(pair_lst, weight_lst):
         graph.add_edge(pair[0], pair[1], weight=weight)
@@ -130,7 +130,12 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
     return dense_adj_mat, normalized_adj_mat, dc_vec
 
-def construct_feature_space(num_points=2048, num_features=3, img_height=128, img_width=512, graph_height=16, graph_width=64, num_channels=1, r_coef=3, t_coef=0.315, negative_src_path=r'train_data/negative', positive_src_path=r'train_data/positive'):
+def construct_feature_space(num_points=2048, num_features=3,
+                            img_height=128, img_width=512,
+                            graph_height=16, graph_width=64,
+                            num_channels=1, r_coef=3, t_coef=0.315,
+                            negative_src_path=r'train_data/negative',
+                            positive_src_path=r'train_data/positive'):
 
     negative_name_lst = os.listdir(negative_src_path)
 
@@ -140,11 +145,11 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
 
     class_label = 0
 
-    for name in negative_name_lst[:]:
+    for name in negative_name_lst:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(negative_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -168,11 +173,11 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in negative_name_lst[:]:
+    for name in negative_name_lst:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(negative_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -202,11 +207,11 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
 
     class_label = 1
 
-    for name in positive_name_lst[:]:
+    for name in positive_name_lst:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(positive_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -230,11 +235,11 @@ def construct_feature_space(num_points=2048, num_features=3, img_height=128, img
         dc_vec_lst.append(dc_vec)
 
     # Optional
-    for name in positive_name_lst[:]:
+    for name in positive_name_lst:
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(positive_src_path + r'//' + str(name[:]), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
