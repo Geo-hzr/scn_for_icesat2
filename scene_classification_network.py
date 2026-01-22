@@ -65,10 +65,10 @@ def build_densenet(inputs, num_classes):
 
     model_path = r'pretrained_model/densenet121_weights_tf_dim_ordering_tf_kernels_notop.h5'
     dn121 = DenseNet121(
-        weights=model_path,
-        include_top=False,
-        input_tensor=inputs,
-        classes=num_classes)
+            weights=model_path,
+            include_top=False,
+            input_tensor=inputs,
+            classes=num_classes)
     dn121.trainable = False
 
     x = dn121(inputs)
@@ -88,7 +88,10 @@ def build_gan(inputs, adj_mat, normalized_adj_mat, num_channels, num_heads, num_
 
     return outputs
 
-def build_scn(num_points=2048, num_features=3, img_height=128, img_width=512, num_nodes=1024, num_channels=1, num_classes=2):
+def build_scn(num_points=2048, num_features=3,
+              img_height=128, img_width=512,
+              num_nodes=1024, num_channels=1,
+              num_classes=2):
 
     inputs_pcd = Input(shape=(num_points, num_features))
 
