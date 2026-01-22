@@ -54,8 +54,8 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
             idx_lst.append(i)
     idx_lst = np.array(idx_lst)
 
-    location = zip(ref_pcd[:, 0][idx_lst], ref_pcd[:, 2][idx_lst])
-    df = pd.DataFrame(list(location))
+    loc = zip(ref_pcd[:, 0][idx_lst], ref_pcd[:, 2][idx_lst])
+    df = pd.DataFrame(list(loc))
 
     from sklearn.cluster import KMeans, MeanShift, estimate_bandwidth
 
@@ -76,22 +76,21 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
     x_referenced = []
     for i in range(num_labels):
         fp = findpeaks(method='peakdetect', interpolate=True)
-        result = fp.fit(z_clustered[i])
-        pt_lst = np.array(result['df'].iloc[:, -1])
+        pt_lst = np.array(fp.fit(z_clustered[i])['df'].iloc[:, -1])
         num_points = len(np.where(pt_lst == True)[0])
         if num_points <= 1:
             x_referenced.append(x_clustered[i])
         else:
-            location = zip(x_clustered[i], z_clustered[i])
-            df = pd.DataFrame(list(location))
+            loc = zip(x_clustered[i], z_clustered[i])
+            df = pd.DataFrame(list(loc))
             km = KMeans(n_clusters=num_points, init='k-means++', n_init=10, max_iter=100, tol=1e-2, random_state=0)
             _ = km.fit_predict(df)
-            label_lst_temp = km.labels_
-            num_labels_temp = np.max(label_lst_temp) + 1
-            x_temp = [[] for _ in range(num_labels_temp)]
-            for label, num in zip(label_lst_temp, range(0, len(label_lst_temp) + 1)):
+            temp_label_lst = km.labels_
+            temp_num_labels = np.max(temp_label_lst) + 1
+            x_temp = [[] for _ in range(temp_num_labels)]
+            for label, num in zip(temp_label_lst, range(0, len(temp_label_lst) + 1)):
                 x_temp[label].append(x_clustered[i][num])
-            for j in range(num_labels_temp):
+            for j in range(temp_num_labels):
                 x_referenced.append(x_temp[j])
 
     boundary_lst = []
