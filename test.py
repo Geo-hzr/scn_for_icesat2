@@ -1,3 +1,4 @@
+import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -5,86 +6,57 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
-from spektral.layers.convolutional import *
-from spektral.layers.pooling import *
 from tensorflow.keras import *
-import presegmentation
-from feature_augmentation import *
+import feature_augmentation
+import scene_classification_network
 
 TF_SEED = 0
 tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
 
-NUM_NEIGHBORS = 10
-STD_RATIO = 0.1
-RADIUS = 15  # Parameter of ball query
-QUANTILE = 0.2  # Parameter of clustering
-VOXEL_SIZE = 30
-NUM_SAMPLES = 15
-THRESHOLD = 0.02  # Threshold of gradient
+PATIENCE = 3
+VALIDATION_SPLIT = 0.7
 
-def test_model():
+def train_model():
 
-    # Load a model
-    model = models.load_model(r'saved_model/scn.h5', custom_objects={'GATConv': GATConv,'DMoNPool': DMoNPool})
+    model = scene_classification_network.build_scn()
 
-    name_lst = os.listdir(r'test_data')
+    model.summary()
 
-    for name in name_lst[:]:
+    model.compile(optimizer=optimizers.Adam(learning_rate=1e-4, decay=1e-8, clipvalue=1.0), loss=losses.binary_crossentropy, metrics=[metrics.binary_accuracy])
 
-        df = pd.read_csv(r'test_data//' + str(name), names=['x', 'y', 'z'], sep=',')
+    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst, label_lst = feature_augmentation.construct_feature_space()
 
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
+    idx_lst = [i for i in range(len(label_lst))]
+    np.random.shuffle(idx_lst)
 
-        pcd_denoised, _ = pcd.remove_statistical_outlier(nb_neighbors=NUM_NEIGHBORS, std_ratio=STD_RATIO)
-        atl03 = np.asarray(pcd_denoised.points)
+    pcd_lst = np.array(pcd_lst)[idx_lst]
+    normal_vec_lst = np.array(normal_vec_lst)[idx_lst]
+    img_lst = np.array(img_lst)[idx_lst] / 255.
+    adj_mat_lst = np.array(adj_mat_lst)[idx_lst]
+    normalized_adj_mat_lst = np.array(normalized_adj_mat_lst)[idx_lst]
+    dc_vec_lst = np.array(dc_vec_lst)[idx_lst]
+    label_lst = np.array(label_lst)[idx_lst]
 
-        pcd_downsampled = pcd_denoised.voxel_down_sample(voxel_size=VOXEL_SIZE)
-        ref_pcd = np.asarray(pcd_downsampled.points)
+    callback = callbacks.EarlyStopping(monitor='val_loss', patience=PATIENCE, mode='min')
 
-        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
+    history = model.fit([pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst], label_lst, epochs=20, batch_size=32, validation_split=VALIDATION_SPLIT, callbacks=[callback])
 
-        pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst = [], [], [], [], [], []
+    acc = history.history['binary_accuracy']
+    loss = history.history['loss']
+    plt.subplot(1, 2, 1)
+    plt.scatter(range(1, len(acc) + 1), acc, label='Training accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.grid(color='black', linestyle='--')
+    plt.subplot(1, 2, 2)
+    plt.scatter(range(1, len(acc) + 1), loss, label='Training loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.grid(color='black', linestyle='--')
+    plt.show()
 
-        for scene in scene_lst:
+    model.save(r'saved_model/scn.h5')
 
-            # 3D point cloud
-            pcd = generate_pcd(scene, 2048)
-            pcd_lst.append(pcd)
-
-            # Normal vector
-            normal_vec = generate_normal_vec(pcd)
-            normal_vec_lst.append(normal_vec)
-
-            # 2D image
-            img = generate_img(scene, 128, 512)
-            img_lst.append(img)
-
-            # 2D graph
-            adj_mat_dense, adj_mat_normalzied, dc_vec = generate_graph(img, 16, 64, 1, 3, 0.315)
-
-            adj_mat_lst.append(adj_mat_dense)
-            adj_mat_normalized_lst.append(adj_mat_normalzied)
-            dc_vec_lst.append(dc_vec)
-
-        pcd_lst = np.array(pcd_lst)
-        normal_vec_lst = np.array(normal_vec_lst)
-        img_lst = np.array(img_lst) / 255.
-        adj_mat_lst = np.array(adj_mat_lst)
-        adj_mat_normalized_lst = np.array(adj_mat_normalized_lst)
-        dc_vec_lst = np.array(dc_vec_lst)
-
-        y_pred = model.predict([pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, adj_mat_normalized_lst, dc_vec_lst])
-
-        # Predict scene labels
-        label_lst = []
-        for pred in y_pred:
-            if pred > 0.5:  # Threshold of prediction
-                label_lst.append(1)
-            else:
-                label_lst.append(0)
-        print(y_pred)
-
-test_model()
+train_model()
