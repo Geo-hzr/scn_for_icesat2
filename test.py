@@ -44,7 +44,7 @@ def test_model():
         downsampled_pcd = denoised_pcd.voxel_down_sample(voxel_size=VOXEL_SIZE)
         ref_pcd = np.asarray(downsampled_pcd.points)
 
-        scene_lst = presegmentation.presegment_atl03(atl03, ref_pcd, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
+        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
 
         pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst = [], [], [], [], [], []
 
