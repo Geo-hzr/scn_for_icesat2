@@ -5,11 +5,11 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from findpeaks import findpeaks
 
-def presegment_atl03(atl03, ref_pcd, num_samples, radius, quantile, threshold):
-
-    seg_lst = [[] for _ in range(ref_pcd.shape[0])]
+def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
 
     grad_lst = []
+
+    seg_lst = [[] for _ in range(ref_pcd.shape[0])]
 
     tree = spatial.cKDTree(ref_pcd)
 
