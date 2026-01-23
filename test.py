@@ -44,7 +44,7 @@ def test_model():
         downsampled_pcd = denoised_pcd.voxel_down_sample(voxel_size=VOXEL_SIZE)
         ref_pcd = np.asarray(downsampled_pcd.points)
 
-        scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
+        scene_lst = presegmentation.presegment_atl03(atl03, ref_pcd, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
 
         pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst = [], [], [], [], [], []
 
@@ -54,19 +54,19 @@ def test_model():
             pcd = generate_pcd(scene, 2048)
             pcd_lst.append(pcd)
 
-            # Normal vector
-            normal_vec = generate_normal_vec(pcd)
-            normal_vec_lst.append(normal_vec)
+            # Normal vectors
+            normal_vecs = generate_normal_vecs(pcd)
+            normal_vec_lst.append(normal_vecs)
 
             # 2D image
             img = generate_img(scene, 128, 512)
             img_lst.append(img)
 
             # 2D graph
-            dense_adj_mat, normalzied_adj_mat, dc_vec = generate_graph(img, 16, 64, 1, 3, 0.315)
+            dense_adj_mat, normalized_adj_mat, dc_vec = generate_graph(img, 16, 64, 1, 3, 0.315)
 
             adj_mat_lst.append(dense_adj_mat)
-            normalized_adj_mat_lst.append(normalzied_adj_mat)
+            normalized_adj_mat_lst.append(normalized_adj_mat)
             dc_vec_lst.append(dc_vec)
 
         pcd_lst = np.array(pcd_lst)
