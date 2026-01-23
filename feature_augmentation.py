@@ -44,7 +44,7 @@ def generate_pcd(atl03, num_points):
 
     return pcd
 
-def generate_normal_vec(pcd):
+def generate_normal_vecs(pcd):
 
     temp_pcd = o3d.geometry.PointCloud()
     temp_pcd.points = o3d.utility.Vector3dVector(np.array(pcd))
@@ -74,7 +74,7 @@ def generate_img(pcd, img_height, img_width):
     return img
 
 @jit(nopython=True)
-def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
+def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
 
     height_lst = []
     width_lst = []
@@ -96,7 +96,7 @@ def detect_graph_edge(graph_height, graph_width, px_lst, r_coef, t_coef):
 
     return pair_lst, weight_lst
 
-def construct_graph(img, r_coef, t_coef):
+def initialize_graph(img, r_coef, t_coef):
 
     px_lst = []
     img_height, img_width = img.shape[0], img.shape[1]
@@ -111,7 +111,7 @@ def construct_graph(img, r_coef, t_coef):
 
     px_lst = np.array(px_lst)
 
-    pair_lst, weight_lst = detect_graph_edge(img_height, img_width, px_lst, r_coef, t_coef)
+    pair_lst, weight_lst = detect_graph_edges(img_height, img_width, px_lst, r_coef, t_coef)
 
     for pair, weight in zip(pair_lst, weight_lst):
         graph.add_edge(pair[0], pair[1], weight=weight)
@@ -122,7 +122,7 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
     gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     gray_img = cv2.resize(gray_img, (graph_width, graph_height))
-    graph = construct_graph(np.array(gray_img, dtype=np.uint8), r_coef, t_coef)
+    graph = initialize_graph(np.array(gray_img, dtype=np.uint8), r_coef, t_coef)
     adj_mat = nx.adjacency_matrix(graph)
     dense_adj_mat = adj_mat.todense()
     normalized_adj_mat = normalized_adjacency(dense_adj_mat)
@@ -130,7 +130,7 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
 
     return dense_adj_mat, normalized_adj_mat, dc_vec
 
-def construct_feature_space(num_points=2048, num_features=3,
+def generate_feature_spaces(num_points=2048, num_features=3,
                             img_height=128, img_width=512,
                             graph_height=16, graph_width=64,
                             num_channels=1, r_coef=3, t_coef=0.315,
@@ -157,9 +157,9 @@ def construct_feature_space(num_points=2048, num_features=3,
         pcd = generate_pcd(atl03, num_points)
         pcd_lst.append(pcd)
 
-        # Normal vector
-        normal_vec = generate_normal_vec(pcd)
-        normal_vec_lst.append(normal_vec)
+        # Normal vectors
+        normal_vecs = generate_normal_vecs(pcd)
+        normal_vec_lst.append(normal_vecs)
 
         # 2D img
         img = generate_img(atl03, img_height, img_width)
@@ -191,8 +191,8 @@ def construct_feature_space(num_points=2048, num_features=3,
         pcd_lst.append(pcd)
 
         # Normal vectors
-        normal_vec = generate_normal_vec(pcd)
-        normal_vec_lst.append(normal_vec)
+        normal_vecs = generate_normal_vecs(pcd)
+        normal_vec_lst.append(normal_vecs)
 
         # 2D image
         img = generate_img(atl03, img_height, img_width)
@@ -219,9 +219,9 @@ def construct_feature_space(num_points=2048, num_features=3,
         pcd = generate_pcd(atl03, num_points)
         pcd_lst.append(pcd)
 
-        # Normal vector
-        normal_vec = generate_normal_vec(pcd)
-        normal_vec_lst.append(normal_vec)
+        # Normal vectors
+        normal_vecs = generate_normal_vecs(pcd)
+        normal_vec_lst.append(normal_vecs)
 
         # 2D image
         img = generate_img(atl03, img_height, img_width)
@@ -252,9 +252,9 @@ def construct_feature_space(num_points=2048, num_features=3,
         pcd = generate_pcd(atl03, num_points)
         pcd_lst.append(pcd)
 
-        # Normal vector
-        normal_vec = generate_normal_vec(pcd)
-        normal_vec_lst.append(normal_vec)
+        # Normal vectors
+        normal_vecs = generate_normal_vecs(pcd)
+        normal_vec_lst.append(normal_vecs)
 
         # 2D img
         img = generate_img(atl03, img_height, img_width)
