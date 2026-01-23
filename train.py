@@ -26,7 +26,7 @@ def train_model():
 
     model.compile(optimizer=optimizers.Adam(learning_rate=1e-4, decay=1e-8, clipvalue=1.0), loss=losses.binary_crossentropy, metrics=[metrics.binary_accuracy])
 
-    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst, label_lst = feature_augmentation.construct_feature_space()
+    pcd_lst, normal_vec_lst, img_lst, adj_mat_lst, normalized_adj_mat_lst, dc_vec_lst, label_lst = feature_augmentation.generate_feature_spaces()
 
     idx_lst = [i for i in range(len(label_lst))]
     np.random.shuffle(idx_lst)
@@ -51,7 +51,7 @@ def train_model():
     plt.ylabel('Accuracy')
     plt.grid(color='black', linestyle='--')
     plt.subplot(1, 2, 2)
-    plt.scatter(range(1, len(acc) + 1), loss, label='Training loss')
+    plt.scatter(range(1, len(loss) + 1), loss, label='Training loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.grid(color='black', linestyle='--')
