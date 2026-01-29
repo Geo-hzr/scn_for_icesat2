@@ -50,7 +50,7 @@ def generate_normal_vecs(pcd):
     temp_pcd.points = o3d.utility.Vector3dVector(np.array(pcd))
     temp_pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
 
-    return np.asarray(temp_pcd.normals)
+    return np.array(temp_pcd.normals)
 
 def generate_img(pcd, img_height, img_width):
 
@@ -68,7 +68,7 @@ def generate_img(pcd, img_height, img_width):
     buf.shape = (w, h, 3)
     buf = np.roll(buf, 3, axis=2)
     img = Image.frombytes('RGB', (w, h), buf.tostring())
-    img = np.asarray(img)
+    img = np.array(img)
     plt.close()
 
     return img
