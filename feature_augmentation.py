@@ -83,7 +83,7 @@ def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
             height_lst.append(i)
             width_lst.append(j)
 
-    pair_lst = []
+    edge_lst = []
     weight_lst = []
 
     for i in range(graph_height * graph_width):
@@ -91,10 +91,10 @@ def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
             d = np.sqrt(np.square(height_lst[i] - height_lst[j]) + np.square(width_lst[i] - width_lst[j]))
             w = (np.square(d) + (np.square(r_coef) * np.abs(px_lst[i] - px_lst[j]) / 255)) / (2 * np.square(r_coef))
             if d <= r_coef and w <= t_coef:
-                pair_lst.append([i, j])
+                edge_lst.append([i, j])
                 weight_lst.append(w)
 
-    return pair_lst, weight_lst
+    return edge_lst, weight_lst
 
 def initialize_graph(img, r_coef, t_coef):
 
@@ -111,10 +111,10 @@ def initialize_graph(img, r_coef, t_coef):
 
     px_lst = np.array(px_lst)
 
-    pair_lst, weight_lst = detect_graph_edges(img_height, img_width, px_lst, r_coef, t_coef)
+    edge_lst, weight_lst = detect_graph_edges(img_height, img_width, px_lst, r_coef, t_coef)
 
-    for pair, weight in zip(pair_lst, weight_lst):
-        graph.add_edge(pair[0], pair[1], weight=weight)
+    for edge, weight in zip(edge_lst, weight_lst):
+        graph.add_edge(edge[0], edge[1], weight=weight)
 
     return graph
 
