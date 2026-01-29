@@ -15,7 +15,7 @@ tf.random.set_seed(TF_SEED)
 tf.config.run_functions_eagerly(True)
 tf.data.experimental.enable_debug_mode()
 
-PATIENCE = 3
+PATIENCE = 5
 VALIDATION_SPLIT = 0.7
 
 def train_model():
