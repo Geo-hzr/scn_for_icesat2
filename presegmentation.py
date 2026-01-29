@@ -22,13 +22,13 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
                 seg_lst[i].append(tgt_pt)
         else:
             ratio = 1.1
-            is_extended = True
-            while is_extended:
+            need_extension = True
+            while need_extension:
                 extended_idx_lst = tree.query_ball_point(src_pt, radius * ratio, return_sorted=True)
                 if len(extended_idx_lst) >= num_samples:
                     for tgt_pt in ref_pcd[extended_idx_lst[:num_samples]]:
                         seg_lst[i].append(tgt_pt)
-                    is_extended = False
+                    need_extension = False
                 else:
                     ratio += 0.1
 
