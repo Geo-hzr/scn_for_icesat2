@@ -39,10 +39,10 @@ def test_model():
         pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
 
         denoised_pcd, _ = pcd.remove_statistical_outlier(nb_neighbors=NUM_NEIGHBORS, std_ratio=STD_RATIO)
-        atl03 = np.asarray(denoised_pcd.points)
+        atl03 = np.array(denoised_pcd.points)
 
         downsampled_pcd = denoised_pcd.voxel_down_sample(voxel_size=VOXEL_SIZE)
-        ref_pcd = np.asarray(downsampled_pcd.points)
+        ref_pcd = np.array(downsampled_pcd.points)
 
         scene_lst = presegmentation.presegment_atl03(ref_pcd, atl03, NUM_SAMPLES, RADIUS, QUANTILE, THRESHOLD)
 
