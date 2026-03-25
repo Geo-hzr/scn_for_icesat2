@@ -105,7 +105,7 @@ def initialize_graph(img, r_coef, t_coef):
     node_idx = 0
     for i in range(img_height):
         for j in range(img_width):
-            graph.add_node(node_idx, pos=(j, img_width - i))
+            graph.add_node(node_idx)
             px_lst.append(np.int(img[i][j]))
             node_idx += 1
 
