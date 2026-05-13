@@ -1,14 +1,15 @@
 import numpy as np
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Qt5Agg')
 from tensorflow.keras import *
 import feature_augmentation
 import scene_classification_network
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+matplotlib.use('Qt5Agg')
 
 TF_SEED = 0
 tf.random.set_seed(TF_SEED)
@@ -17,6 +18,7 @@ tf.data.experimental.enable_debug_mode()
 
 PATIENCE = 5
 VALIDATION_SPLIT = 0.7
+
 
 def train_model():
 
@@ -58,5 +60,6 @@ def train_model():
     plt.show()
 
     model.save(r'saved_model/scn.h5')
+
 
 train_model()
