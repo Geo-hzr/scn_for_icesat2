@@ -1,15 +1,16 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Qt5Agg')
 from spektral.layers.convolutional import *
 from spektral.layers.pooling import *
 from tensorflow.keras import *
 import presegmentation
 from feature_augmentation import *
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+matplotlib.use('Qt5Agg')
 
 TF_SEED = 0
 tf.random.set_seed(TF_SEED)
@@ -24,16 +25,17 @@ VOXEL_SIZE = 30
 NUM_SAMPLES = 15
 THRESHOLD = 0.02  # Threshold of gradient
 
+
 def test_model():
 
     # Load a model
-    model = models.load_model(r'saved_model/scn.h5', custom_objects={'GATConv': GATConv,'DMoNPool': DMoNPool})
+    model = models.load_model(r'saved_model/scn.h5', custom_objects={'GATConv': GATConv, 'DMoNPool': DMoNPool})
 
     name_lst = os.listdir(r'test_data')
 
     for name in name_lst[:]:
 
-        df = pd.read_csv(r'test_data//' + str(name), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(r'test_data/' + str(name), names=['x', 'y', 'z'], sep=',')
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(df.iloc[:, :3]))
@@ -86,5 +88,6 @@ def test_model():
             else:
                 label_lst.append(0)
         print(label_lst)
+
 
 test_model()
