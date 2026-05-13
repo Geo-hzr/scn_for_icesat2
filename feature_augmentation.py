@@ -10,6 +10,7 @@ import open3d as o3d
 import PIL.Image as Image
 from scipy.spatial.transform import Rotation
 
+
 def fps(pcd, num_samples):
 
     pcd = np.expand_dims(pcd, axis=0)  # (1, N, 3)
@@ -28,6 +29,7 @@ def fps(pcd, num_samples):
 
     return centroid_mat
 
+
 def normalize_pcd(pcd):
 
     centroid = np.mean(pcd, axis=0)
@@ -37,12 +39,14 @@ def normalize_pcd(pcd):
 
     return normalized_pcd
 
+
 def generate_pcd(atl03, num_points):
 
     centroid_mat = fps(atl03, num_points)
     pcd = normalize_pcd(atl03[centroid_mat][0])
 
     return pcd
+
 
 def generate_normal_vecs(pcd):
 
@@ -51,6 +55,7 @@ def generate_normal_vecs(pcd):
     temp_pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN())
 
     return np.array(temp_pcd.normals)
+
 
 def generate_img(pcd, img_height, img_width):
 
@@ -72,6 +77,7 @@ def generate_img(pcd, img_height, img_width):
     plt.close()
 
     return img
+
 
 @jit(nopython=True)
 def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
@@ -96,6 +102,7 @@ def detect_graph_edges(graph_height, graph_width, px_lst, r_coef, t_coef):
 
     return edge_lst, weight_lst
 
+
 def initialize_graph(img, r_coef, t_coef):
 
     px_lst = []
@@ -118,6 +125,7 @@ def initialize_graph(img, r_coef, t_coef):
 
     return graph
 
+
 def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef):
 
     gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -129,6 +137,7 @@ def generate_graph(img, graph_height, graph_width, num_channels, r_coef, t_coef)
     dc_vec = np.array(list(nx.degree_centrality(graph).values())).reshape((graph_height * graph_width, num_channels))
 
     return dense_adj_mat, normalized_adj_mat, dc_vec
+
 
 def generate_feature_spaces(num_points=2048, num_features=3,
                             img_height=128, img_width=512,
@@ -149,7 +158,7 @@ def generate_feature_spaces(num_points=2048, num_features=3,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(negative_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'/' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -177,7 +186,7 @@ def generate_feature_spaces(num_points=2048, num_features=3,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(negative_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(negative_src_path + r'/' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -211,7 +220,7 @@ def generate_feature_spaces(num_points=2048, num_features=3,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(positive_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'/' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
@@ -239,7 +248,7 @@ def generate_feature_spaces(num_points=2048, num_features=3,
 
         label_lst.append(class_label)
 
-        df = pd.read_csv(positive_src_path + r'//' + str(name), names=['x', 'y', 'z'], sep=',')
+        df = pd.read_csv(positive_src_path + r'/' + str(name), names=['x', 'y', 'z'], sep=',')
 
         atl03 = np.array(df.iloc[:, :num_features])
 
