@@ -5,6 +5,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from findpeaks import findpeaks
 
+
 def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
 
     grad_lst = []
@@ -108,7 +109,7 @@ def presegment_atl03(ref_pcd, atl03, num_samples, radius, quantile, threshold):
     for i in range(len(boundary_lst)):
         coord_lst = []
         for coord in atl03:
-            if coord[0] >= boundary_lst[i][0] and coord[0] <= boundary_lst[i][-1]:
+            if boundary_lst[i][0] <= coord[0] <= boundary_lst[i][-1]:
                 coord_lst.append([coord[0], coord[1], coord[2]])
         coord_lst = np.array(coord_lst)
         if coord_lst.shape[0] != 0:
