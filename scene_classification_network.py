@@ -3,6 +3,7 @@ from tensorflow.keras import  Model
 from tensorflow.keras.applications import *
 from spektral.layers import *
 
+
 def build_pointnet(inputs, normal_vec, num_channels):
 
     # Rotation transformation
@@ -61,6 +62,7 @@ def build_pointnet(inputs, normal_vec, num_channels):
 
     return outputs
 
+
 def build_densenet(inputs, num_classes):
 
     model_path = r'pretrained_model/densenet121_weights_tf_dim_ordering_tf_kernels_notop.h5'
@@ -76,6 +78,7 @@ def build_densenet(inputs, num_classes):
 
     return outputs
 
+
 def build_gan(inputs, adj_mat, normalized_adj_mat, num_channels, num_heads, num_nodes):
 
     x = BatchNormalization()(inputs)
@@ -87,6 +90,7 @@ def build_gan(inputs, adj_mat, normalized_adj_mat, num_channels, num_heads, num_
     outputs = GlobalMaxPool1D()(x)
 
     return outputs
+
 
 def build_scn(num_points=2048, num_features=3,
               img_height=128, img_width=512,
